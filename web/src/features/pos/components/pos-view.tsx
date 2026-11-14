@@ -130,20 +130,20 @@ export function PosView() {
       >
         {/* Zone 1: Menu Grid */}
         <ResizablePanel
-          defaultSize="80%"
+          defaultSize="70%"
           minSize="40%"
           className="flex flex-col min-w-[320px] overflow-hidden"
         >
-          <div className="flex items-center justify-end border-b border-border px-3 py-2 shrink-0">
-            <PendingOrdersButton
-              count={pendingOrders.orders.length}
-              readyCount={pendingOrders.readyCount}
-              onClick={pendingOrders.open}
-            />
-          </div>
           <MenuGrid
             categories={menu?.categories}
             onSelectItem={editor.selectItem}
+            headerAction={
+              <PendingOrdersButton
+                count={pendingOrders.orders.length}
+                readyCount={pendingOrders.readyCount}
+                onClick={pendingOrders.open}
+              />
+            }
             disabled={
               !isShiftOpen ||
               (isDineIn ? !dineInStatus.canOrder : phase !== "NO_SESSION" && phase !== "DRAFTING")
@@ -155,9 +155,9 @@ export function PosView() {
 
         {/* Zone 2: Order Bill Aside */}
         <ResizablePanel
-          defaultSize="20%"
-          minSize="280px"
-          maxSize="60%"
+          defaultSize="30%"
+          minSize="320px"
+          maxSize="55%"
           className="flex flex-col overflow-hidden"
         >
           <PosOrderPanel

@@ -18,10 +18,10 @@
   --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --text-3xs: 0.625rem;
-  --text-3xs--line-height: 0.75rem;
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 0.875rem;
+  --text-3xs: 0.6875rem;
+  --text-3xs--line-height: 0.9375rem;
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1rem;
 
   --spacing-touch: 3rem;
 
@@ -78,14 +78,14 @@
   --primary-foreground: oklch(1 0 0);          /* #ffffff */
   --secondary: oklch(0.48 0.20 270);           /* #4f46e5 indigo-600 */
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.95 0.01 240);               /* #f1f5f9 slate-100 */
-  --muted-foreground: oklch(0.48 0.02 240);    /* #64748b slate-500 */
+  --muted: oklch(0.95 0.008 240);             /* #f1f5f9 slate-100 */
+  --muted-foreground: oklch(0.42 0.02 240);    /* #475569 slate-600 for 4.5:1+ contrast */
   --accent: oklch(0.65 0.16 75);               /* #d97706 amber-600 */
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.55 0.22 25);          /* #dc2626 red-600 */
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.88 0.01 240);              /* #cbd5e1 slate-300 */
-  --input: oklch(0.88 0.01 240);               /* #cbd5e1 slate-300 */
+  --border: oklch(0.86 0.012 240);             /* crisp card/well separation */
+  --input: oklch(0.84 0.014 240);
   --ring: oklch(0.58 0.16 160);                /* emerald-600 focus ring */
   --radius: 0.75rem;
 
@@ -140,6 +140,18 @@
   html {
     @apply font-sans;
   }
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 @keyframes pinShake {
@@ -166,7 +178,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-pin-shake,
-  .animate-pop-in {
+  .animate-pop-in,
+  .animate-pulse,
+  .animate-ping {
     animation: none !important;
   }
 }

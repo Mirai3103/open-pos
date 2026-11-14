@@ -11,12 +11,14 @@ import { playTapChirp } from "@/lib/sound";
 export interface MenuGridProps {
   categories?: CatalogSellableCategoryResponse[];
   onSelectItem: (item: CatalogSellableItemResponse) => void;
+  headerAction?: React.ReactNode;
   disabled?: boolean;
 }
 
 export function MenuGrid({
   categories = [],
   onSelectItem,
+  headerAction,
   disabled = false,
 }: MenuGridProps) {
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(
@@ -65,34 +67,38 @@ export function MenuGrid({
   return (
     <section className="flex flex-1 flex-col overflow-hidden bg-background">
       {/* Top Search & Category Filter Toolbar */}
-      <div className="flex flex-col gap-2.5 border-b border-border bg-card p-4 shrink-0 shadow-2xs">
-        {/* Search Input Bar */}
-        <div className="relative w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm món nhanh (tên món, viết tắt: cfsd, bx)... [/]"
-            className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                searchInputRef.current?.focus();
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : (
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rounded border border-border bg-card px-1.5 py-0.5 font-mono text-2xs text-muted-foreground shadow-2xs">
-              /
-            </kbd>
-          )}
+      <div className="flex flex-col gap-2.5 border-b border-border bg-card px-4 py-3 shrink-0 shadow-2xs">
+        {/* Search Input Bar + Optional Action */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm món nhanh (tên món, viết tắt: cfsd, bx)... [/]"
+              className="h-12 w-full rounded-xl border border-border bg-muted/40 pl-10 pr-12 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                aria-label="Xóa tìm kiếm"
+                onClick={() => {
+                  setSearchQuery("");
+                  searchInputRef.current?.focus();
+                }}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 min-h-[40px] min-w-[40px] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rounded border border-border bg-card px-1.5 py-0.5 font-mono text-2xs text-muted-foreground shadow-2xs">
+                /
+              </kbd>
+            )}
+          </div>
+          {headerAction && <div className="shrink-0">{headerAction}</div>}
         </div>
 
         {/* Category Filter Pills Rail (min-h-[48px]) */}

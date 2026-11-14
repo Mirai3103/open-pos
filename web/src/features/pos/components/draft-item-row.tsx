@@ -81,9 +81,12 @@ export function DraftItemRow({
 
           {/* Preparation Note */}
           {item.preparation_note && (
-            <p className="text-2xs italic text-slate-500 dark:text-slate-400">
-              "{item.preparation_note}"
-            </p>
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-semibold text-amber-900">
+                <AlertCircle className="h-3 w-3 text-amber-600 shrink-0" />
+                {item.preparation_note}
+              </span>
+            </div>
           )}
         </div>
 
@@ -95,7 +98,7 @@ export function DraftItemRow({
             playTapChirp();
             if (item.id) onRemove(item.id);
           }}
-          className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center select-none active:scale-95 transition"
+          className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center select-none active:scale-95 transition shrink-0"
           aria-label="Xóa món"
         >
           <Trash2 className="h-4 w-4" />
@@ -103,14 +106,14 @@ export function DraftItemRow({
       </div>
 
       {/* Bottom Line: Unit Price, Stepper, Line Total */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/40">
+      <div className="flex items-center justify-between pt-1.5 border-t border-border/50">
         <span className="font-mono text-xs text-muted-foreground">
           {formatVND(unitPrice)}
         </span>
 
         {/* Stepper */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-lg border border-border bg-muted/40 p-0.5">
+          <div className="flex items-center rounded-xl border border-border bg-muted/40 p-0.5">
             <button
               type="button"
               disabled={disabled || quantity <= 1}
@@ -118,12 +121,12 @@ export function DraftItemRow({
                 playTapChirp();
                 if (item.id) onQuantityChange(item.id, Math.max(1, quantity - 1));
               }}
-              className="h-8 w-8 min-h-[32px] min-w-[32px] rounded text-foreground hover:bg-card disabled:opacity-30 flex items-center justify-center select-none active:scale-90 transition"
+              className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-lg text-foreground hover:bg-card disabled:opacity-30 flex items-center justify-center select-none active:scale-90 transition"
               aria-label="Giảm số lượng"
             >
-              <Minus className="h-3.5 w-3.5" />
+              <Minus className="h-4 w-4" />
             </button>
-            <span className="w-8 text-center font-mono text-xs font-bold text-foreground tabular-nums">
+            <span className="w-8 text-center font-mono text-sm font-bold text-foreground tabular-nums">
               {quantity}
             </span>
             <button
@@ -133,10 +136,10 @@ export function DraftItemRow({
                 playTapChirp();
                 if (item.id) onQuantityChange(item.id, Math.min(9999, quantity + 1));
               }}
-              className="h-8 w-8 min-h-[32px] min-w-[32px] rounded text-foreground hover:bg-card disabled:opacity-30 flex items-center justify-center select-none active:scale-90 transition"
+              className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-lg text-foreground hover:bg-card disabled:opacity-30 flex items-center justify-center select-none active:scale-90 transition"
               aria-label="Tăng số lượng"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
             </button>
           </div>
 

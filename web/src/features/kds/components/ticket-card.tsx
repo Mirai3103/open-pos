@@ -146,10 +146,11 @@ export function TicketCard({
       </div>
 
       {/* Subtitle Info Row */}
-      <div className="flex items-center justify-between text-2xs text-slate-400">
-        <span>Đơn #{ticket.serviceNumber}</span>
-        {formattedTime && <span className="font-mono">{formattedTime}</span>}
-      </div>
+      {formattedTime && (
+        <div className="flex items-center justify-between text-2xs font-medium text-slate-600">
+          <span>Nhận lúc <span className="font-mono font-semibold">{formattedTime}</span></span>
+        </div>
+      )}
 
       {/* Checklist of items */}
       <div className="border-t border-b border-slate-100 py-2 space-y-2">
@@ -203,9 +204,9 @@ export function TicketCard({
                   disabled={busy}
                   title="Huỷ món (lỗi pha chế, không đạt, khách yêu cầu...)"
                   aria-label="Huỷ món"
-                  className="h-8 w-8 rounded-xl border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-slate-400 flex items-center justify-center transition disabled:opacity-50 shrink-0 cursor-pointer"
+                  className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-xl border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-slate-600 flex items-center justify-center transition disabled:opacity-50 shrink-0 cursor-pointer"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               )}
               {correctTarget && (
@@ -215,9 +216,9 @@ export function TicketCard({
                   disabled={busy}
                   title="Hoàn tác thao tác gần nhất (cần Quản lý duyệt)"
                   aria-label="Hoàn tác thao tác"
-                  className="h-8 w-8 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 text-slate-400 flex items-center justify-center transition disabled:opacity-50 shrink-0 cursor-pointer"
+                  className="h-10 w-10 min-h-[40px] min-w-[40px] rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 text-slate-600 flex items-center justify-center transition disabled:opacity-50 shrink-0 cursor-pointer"
                 >
-                  <Undo2 className="h-3.5 w-3.5" />
+                  <Undo2 className="h-4 w-4" />
                 </button>
               )}
             </div>

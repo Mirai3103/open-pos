@@ -39,18 +39,19 @@ export function MenuItemCard({
           handleClick();
         }
       }}
-      className={`group flex flex-col justify-between rounded-2xl border border-border bg-card p-3 min-h-[210px] select-none transition-all ${
+      className={`group flex flex-col justify-between rounded-2xl border border-border bg-card p-2.5 min-h-[196px] select-none transition-all shadow-card ${
         disabled
           ? "opacity-50 cursor-not-allowed"
-          : "cursor-pointer hover:border-primary hover:shadow-xs active:scale-[0.98]"
+          : "cursor-pointer hover:border-primary hover:shadow-card-hover active:scale-[0.98]"
       }`}
     >
       {/* Media Well with Fallback */}
-      <div className="relative aspect-[16/10] min-h-[110px] w-full overflow-hidden rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+      <div className="relative aspect-[16/10] min-h-[104px] w-full overflow-hidden rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
         {item.image_url && !imageError ? (
           <img
             src={item.image_url}
             alt={item.name ?? "Món"}
+            loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={() => setImageError(true)}
           />

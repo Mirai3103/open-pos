@@ -50,7 +50,7 @@ export function DraftPanel({
   return (
     <aside className={`flex flex-col bg-card overflow-hidden select-none ${asideLayout}`}>
       {/* Bill Header */}
-      <div className="flex items-center justify-between border-b border-border p-4 bg-muted/20 shrink-0">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-muted/20 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
             <Receipt className="h-5 w-5" />
@@ -60,7 +60,7 @@ export function DraftPanel({
               <span className="text-sm font-bold text-foreground">
                 {serviceNumber ? `Đơn mang đi #${serviceNumber}` : "Đơn mang đi"}
               </span>
-              <span className="rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 px-2 py-0.5 text-2xs font-bold">
+              <span className="rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200/70 px-2 py-0.5 text-2xs font-bold">
                 Mang đi
               </span>
             </div>
@@ -68,12 +68,12 @@ export function DraftPanel({
           </div>
         </div>
 
-        {/* Clear / Reset Cart (Disabled in Slice 3) */}
+        {/* Clear / Reset Cart (Disabled until BA-5) */}
         <button
           type="button"
           disabled
           title="Chức năng hủy toàn bộ đơn chưa hỗ trợ; vui lòng xóa từng món"
-          className="h-12 min-h-[48px] px-3 rounded-xl text-xs font-semibold text-muted-foreground border border-transparent opacity-40 cursor-not-allowed flex items-center gap-1.5"
+          className="h-10 min-h-[40px] px-2.5 rounded-xl text-xs font-semibold text-muted-foreground border border-transparent opacity-45 cursor-not-allowed flex items-center gap-1.5"
         >
           <Trash2 className="h-4 w-4" />
           <span>Hủy đơn</span>
@@ -81,7 +81,7 @@ export function DraftPanel({
       </div>
 
       {/* Bill Items Scrollable Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-muted/10">
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 bg-muted/15">
         {draftItems.length > 0 ? (
           draftItems.map((item) => (
             <DraftItemRow
@@ -99,7 +99,7 @@ export function DraftPanel({
       </div>
 
       {/* Financial Summary */}
-      <div className="border-t border-border bg-card p-4 space-y-1.5 shrink-0 shadow-2xs">
+      <div className="border-t border-border bg-card px-4 py-3 space-y-1 shrink-0 shadow-2xs">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Tạm tính ({draftItems.length} món)</span>
           <span className="font-mono font-semibold text-foreground">{formatVND(subtotal)}</span>
@@ -113,37 +113,37 @@ export function DraftPanel({
       </div>
 
       {/* Bill Actions / Checkout Drawer */}
-      <div className="border-t border-border bg-muted/20 p-4 space-y-2.5 shrink-0">
-        {/* Mode Switcher: Dine-In Disabled */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl border border-border">
-          <div className="min-h-[40px] h-10 px-3 rounded-lg font-bold text-xs bg-foreground text-background flex items-center justify-center gap-1.5 shadow-xs">
+      <div className="border-t border-border bg-muted/20 p-3 space-y-2 shrink-0">
+        {/* Mode Switcher */}
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-xl border border-border">
+          <div className="min-h-[38px] h-9.5 px-3 rounded-lg font-bold text-xs bg-foreground text-background flex items-center justify-center gap-1.5 shadow-xs">
             <ShoppingBag className="h-3.5 w-3.5" />
             <span>Mang đi</span>
           </div>
           <Link
             to="/tables"
-            className="min-h-[40px] h-10 px-3 rounded-lg font-medium text-xs text-foreground hover:bg-card flex items-center justify-center gap-1.5"
+            className="min-h-[38px] h-9.5 px-3 rounded-lg font-medium text-xs text-foreground hover:bg-card flex items-center justify-center gap-1.5"
           >
             <Utensils className="h-3.5 w-3.5" />
             <span>Tại bàn</span>
           </Link>
         </div>
 
-        {/* Payment method: cash only in Slice 4 */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl border border-border">
-          <div className="min-h-[40px] h-10 px-3 rounded-lg font-bold text-xs bg-card text-foreground flex items-center justify-center gap-1.5 shadow-2xs">
-            <Banknote className="h-3.5 w-3.5" />
+        {/* Payment method: cash only until VietQR store profile lands */}
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-xl border border-border">
+          <div className="min-h-[38px] h-9.5 px-3 rounded-lg font-bold text-xs bg-card text-foreground flex items-center justify-center gap-1.5 shadow-2xs">
+            <Banknote className="h-3.5 w-3.5 text-primary" />
             <span>Tiền mặt</span>
           </div>
           <button
             type="button"
             disabled
             title="Thanh toán VietQR sẽ hoạt động ở phiên bản sau"
-            className="min-h-[40px] h-10 px-3 rounded-lg font-medium text-xs text-muted-foreground opacity-50 cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="min-h-[38px] h-9.5 px-3 rounded-lg font-medium text-xs text-muted-foreground opacity-55 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <QrCode className="h-3.5 w-3.5" />
             <span>VietQR</span>
-            <span className="text-2xs">Sắp có</span>
+            <span className="text-3xs">Sắp có</span>
           </button>
         </div>
 
@@ -152,7 +152,7 @@ export function DraftPanel({
           type="button"
           onClick={onCheckout}
           disabled={!canCheckout}
-          className="min-h-[48px] h-12 w-full rounded-xl bg-primary text-sm font-bold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center justify-center select-none active:scale-[0.98] transition"
+          className="min-h-[52px] h-13 w-full rounded-xl bg-primary hover:bg-primary/90 text-sm font-bold text-primary-foreground shadow-xs disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex items-center justify-center select-none active:scale-[0.98] transition"
         >
           <span>Thanh toán (F9)</span>
         </button>
