@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/auth"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"

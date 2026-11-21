@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/tables"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/tables"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
-	"github.com/Mirai3103/pos-cafe/internal/sales"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/sales"
+	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/stretchr/testify/require"
 )
 

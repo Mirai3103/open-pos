@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/testdb"
+	"github.com/Mirai3103/open-pos/internal/testdb"
 )
 
 // commandTestDB is the single pool every command integration test shares,

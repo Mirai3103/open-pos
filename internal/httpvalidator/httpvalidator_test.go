@@ -3,7 +3,7 @@ package httpvalidator_test
 import (
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/httpvalidator"
+	"github.com/Mirai3103/open-pos/internal/httpvalidator"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

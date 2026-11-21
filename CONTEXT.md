@@ -1,4 +1,4 @@
-# Cafe POS
+# Open POS
 
 Domain language for the sales workflow of this single cafe.
 

@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/httpx"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/platform/httpx"
+	"github.com/Mirai3103/open-pos/internal/response"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

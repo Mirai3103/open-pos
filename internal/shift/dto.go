@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/auth"
 	"github.com/google/uuid"
 )
 

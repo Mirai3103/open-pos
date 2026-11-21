@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/httpvalidator"
+	"github.com/Mirai3103/open-pos/internal/httpvalidator"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )

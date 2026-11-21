@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/shift"
+	"github.com/Mirai3103/open-pos/internal/shift"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

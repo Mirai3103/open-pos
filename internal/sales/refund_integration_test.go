@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Mirai3103/pos-cafe/internal/sales"
+	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"

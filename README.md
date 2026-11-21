@@ -1,12 +1,27 @@
-# POS Cafe
+# Open POS
 
 [![Go Version](https://img.shields.io/badge/Go-1.27+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2017-blue?style=flat&logo=postgresql)](https://www.postgresql.org)
 [![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%202.0-green?style=flat&logo=swagger)](https://swagger.io)
 
-A point-of-sale system for a single cafe: a Go backend organised as **vertical
-slices** over PostgreSQL, and a React frontend in `web/` that is embedded into the
-same binary.
+**Open POS** is an open-source, self-hosted point-of-sale for cafés and small
+food-and-beverage shops. One installation runs one store: a Go backend organised as
+**vertical slices** over PostgreSQL, and a React frontend in `web/` embedded into the
+same binary, so the whole system ships as a single executable (or a single Docker
+image) next to a PostgreSQL database.
+
+### What it covers
+
+- **Staff access:** per-staff PIN sign-in, session lock, and Manager approval for
+  sensitive actions.
+- **Catalog:** menu items, sizes, toppings and availability.
+- **Tables & dine-in:** floor plan and table service alongside takeaway.
+- **Sales:** draft orders, checkout, payments and recovery of a failed or abandoned
+  checkout.
+- **Preparation (KDS):** a kitchen/bar display queue fed by submitted orders.
+- **Shifts:** opening float, cash reconciliation and shift close.
+- **Audit:** every authorized mutation writes an audit event through one shared
+  command pipeline.
 
 The domain language is defined in [`CONTEXT.md`](CONTEXT.md) and is binding.
 Architecture decisions live in [`spec/decisions.md`](spec/decisions.md), and current
@@ -56,7 +71,7 @@ status and remaining work in [`ROADMAP.md`](ROADMAP.md).
 ## Project Structure
 
 ```text
-pos-cafe/
+open-pos/
 ├── cmd/api/                    # Entrypoint: explicit wiring, graceful shutdown
 ├── api/openapi/                # Generated Swagger 2.0 (swag): docs.go, swagger.json, swagger.yaml
 ├── internal/

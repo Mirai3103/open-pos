@@ -1,4 +1,4 @@
-module github.com/Mirai3103/pos-cafe
+module github.com/Mirai3103/open-pos
 
 go 1.27.0
 

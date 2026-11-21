@@ -24,7 +24,7 @@ COPY api/ ./api/
 COPY web/*.go ./web/
 COPY --from=web-builder /build/web/dist ./web/dist
 
-RUN go build -trimpath -ldflags="-s -w" -o /build/bin/pos-cafe ./cmd/api
+RUN go build -trimpath -ldflags="-s -w" -o /build/bin/open-pos ./cmd/api
 
 # Stage 3: Minimal runtime
 FROM alpine:3.21 AS runner
@@ -35,7 +35,7 @@ RUN apk add --no-cache ca-certificates tzdata \
 
 WORKDIR /app
 
-COPY --from=backend-builder /build/bin/pos-cafe /app/pos-cafe
+COPY --from=backend-builder /build/bin/open-pos /app/open-pos
 
 RUN mkdir -p /app/data/media && chown -R nonroot:nonroot /app
 
@@ -46,4 +46,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 --start-period=5s \
   CMD wget -qO- http://localhost:8080/health || exit 1
 
-ENTRYPOINT ["/app/pos-cafe"]
+ENTRYPOINT ["/app/open-pos"]

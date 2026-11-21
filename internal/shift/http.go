@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/platform/httpx"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/platform/httpx"
+	"github.com/Mirai3103/open-pos/internal/response"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

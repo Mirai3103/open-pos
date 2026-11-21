@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/response"
-	"github.com/Mirai3103/pos-cafe/internal/sales"
+	"github.com/Mirai3103/open-pos/internal/response"
+	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )

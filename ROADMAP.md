@@ -1,4 +1,4 @@
-# POS Cafe Roadmap
+# Open POS Roadmap
 
 Phases 0 through 6C are complete. The TypeScript-to-Go migration is **closed**
 (ADR-047): this repository has passed its source, and every phase from 07 onward is

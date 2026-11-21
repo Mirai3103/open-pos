@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/response"
-	"github.com/Mirai3103/pos-cafe/internal/shift"
+	"github.com/Mirai3103/open-pos/internal/response"
+	"github.com/Mirai3103/open-pos/internal/shift"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
