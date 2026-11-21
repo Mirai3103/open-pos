@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "Backend API for Cafe Point of Sale System built with Vertical Slice Architecture and Idiomatic Go.",
-        "title": "POS Cafe API",
+        "title": "Open POS API",
         "contact": {},
         "version": "1.0"
     },

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/httpx"
+	"github.com/Mirai3103/open-pos/internal/platform/httpx"
 	"github.com/labstack/echo/v4"
 )
 

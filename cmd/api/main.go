@@ -11,24 +11,24 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/Mirai3103/pos-cafe/api/openapi"
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/catalog"
-	"github.com/Mirai3103/pos-cafe/internal/httpvalidator"
-	"github.com/Mirai3103/pos-cafe/internal/platform/config"
-	"github.com/Mirai3103/pos-cafe/internal/platform/database"
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
-	"github.com/Mirai3103/pos-cafe/internal/preparation"
-	"github.com/Mirai3103/pos-cafe/internal/sales"
-	"github.com/Mirai3103/pos-cafe/internal/shift"
-	"github.com/Mirai3103/pos-cafe/internal/tables"
-	"github.com/Mirai3103/pos-cafe/web"
+	_ "github.com/Mirai3103/open-pos/api/openapi"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/catalog"
+	"github.com/Mirai3103/open-pos/internal/httpvalidator"
+	"github.com/Mirai3103/open-pos/internal/platform/config"
+	"github.com/Mirai3103/open-pos/internal/platform/database"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/preparation"
+	"github.com/Mirai3103/open-pos/internal/sales"
+	"github.com/Mirai3103/open-pos/internal/shift"
+	"github.com/Mirai3103/open-pos/internal/tables"
+	"github.com/Mirai3103/open-pos/web"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-// @title POS Cafe API
+// @title Open POS API
 // @version 1.0
 // @description Backend API for Cafe Point of Sale System built with Vertical Slice Architecture and Idiomatic Go.
 // @host localhost:8080

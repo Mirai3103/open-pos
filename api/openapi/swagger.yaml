@@ -2653,7 +2653,7 @@ info:
   contact: {}
   description: Backend API for Cafe Point of Sale System built with Vertical Slice
     Architecture and Idiomatic Go.
-  title: POS Cafe API
+  title: Open POS API
   version: "1.0"
 paths:
   /auth/activity:

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/catalog"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/catalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

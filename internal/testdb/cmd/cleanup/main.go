@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Mirai3103/pos-cafe/internal/testdb"
+	"github.com/Mirai3103/open-pos/internal/testdb"
 )
 
 func main() {

@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/catalog"
+	"github.com/Mirai3103/open-pos/internal/catalog"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

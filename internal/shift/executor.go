@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/command"
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/command"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
 )
 
 // Actor identifies the authenticated staff member executing an operation.

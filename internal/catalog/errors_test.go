@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/catalog"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/catalog"
+	"github.com/Mirai3103/open-pos/internal/response"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 )

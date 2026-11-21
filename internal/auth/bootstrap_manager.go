@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/response"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/labstack/echo/v4"
 )

@@ -12848,7 +12848,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "POS Cafe API",
+	Title:            "Open POS API",
 	Description:      "Backend API for Cafe Point of Sale System built with Vertical Slice Architecture and Idiomatic Go.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/auth"
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
-	"github.com/Mirai3103/pos-cafe/internal/preparation"
+	"github.com/Mirai3103/open-pos/internal/auth"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/preparation"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"

@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/testdb"
+	"github.com/Mirai3103/open-pos/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

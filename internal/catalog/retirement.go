@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
 	"github.com/google/uuid"
 )
 

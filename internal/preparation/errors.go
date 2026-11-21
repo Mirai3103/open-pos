@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Mirai3103/pos-cafe/internal/platform/command"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/platform/command"
+	"github.com/Mirai3103/open-pos/internal/response"
 )
 
 var (

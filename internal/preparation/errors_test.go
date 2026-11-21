@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Mirai3103/pos-cafe/internal/preparation"
-	"github.com/Mirai3103/pos-cafe/internal/response"
+	"github.com/Mirai3103/open-pos/internal/preparation"
+	"github.com/Mirai3103/open-pos/internal/response"
 	"github.com/stretchr/testify/require"
 )
 
