@@ -1,0 +1,22 @@
+{
+  "exclude": [
+    ".agents/",
+    ".claude/skills/",
+    ".codex/",
+    ".gemini/",
+    ".pi/",
+    ".superpowers/",
+    ".playwright-mcp/",
+    ".worktrees/",
+    "design-system/",
+    "docs/",
+    "resources/",
+    "web/dist/",
+    "web/public/"
+  ],
+  "deprioritize": [
+    "web/src/api/generated/",
+    "internal/platform/database/sqlc/",
+    "scripts/"
+  ]
+}
