@@ -82,3 +82,49 @@ type CostEntryResponse struct {
 	CostPerStockUnit float64    `json:"cost_per_stock_unit"`
 	RecordedAt       time.Time  `json:"recorded_at"`
 }
+
+// RecipeLineInput is one Recipe line as entered.
+type RecipeLineInput struct {
+	IngredientID uuid.UUID `json:"ingredient_id"`
+	Quantity     float64   `json:"quantity"`
+	Unit         UnitRef   `json:"unit"`
+}
+
+// SetRecipeCommand replaces a sale Recipe's lines; an empty list deletes it.
+// OwnerKind and OwnerID come from the route.
+type SetRecipeCommand struct {
+	RequestID uuid.UUID         `json:"request_id"`
+	OwnerKind string            `json:"-"`
+	OwnerID   uuid.UUID         `json:"-"`
+	Lines     []RecipeLineInput `json:"lines"`
+}
+
+// SetBatchRecipeCommand replaces a prepared Ingredient's Batch Recipe.
+// YieldQuantity is in the prepared Ingredient's Stock Units. An empty Lines
+// deletes the Batch Recipe.
+type SetBatchRecipeCommand struct {
+	RequestID     uuid.UUID         `json:"request_id"`
+	IngredientID  uuid.UUID         `json:"-"`
+	YieldQuantity float64           `json:"yield_quantity"`
+	Lines         []RecipeLineInput `json:"lines"`
+}
+
+// RecipeLineResponse is one stored line, in its entered unit.
+type RecipeLineResponse struct {
+	IngredientID       uuid.UUID  `json:"ingredient_id"`
+	IngredientName     string     `json:"ingredient_name"`
+	IngredientKind     string     `json:"ingredient_kind"`
+	StockUnit          string     `json:"stock_unit"`
+	Quantity           float64    `json:"quantity"`
+	UnitCode           *string    `json:"unit_code"`
+	IngredientUnitID   *uuid.UUID `json:"ingredient_unit_id"`
+	IngredientUnitName *string    `json:"ingredient_unit_name"`
+}
+
+// RecipeResponse is one Recipe or Batch Recipe. Lines is empty when none exists.
+type RecipeResponse struct {
+	OwnerKind     string               `json:"owner_kind"`
+	OwnerID       uuid.UUID            `json:"owner_id"`
+	YieldQuantity *float64             `json:"yield_quantity"`
+	Lines         []RecipeLineResponse `json:"lines"`
+}
