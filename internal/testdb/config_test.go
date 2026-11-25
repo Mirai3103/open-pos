@@ -23,7 +23,7 @@ func TestParseConfig(t *testing.T) {
 		{"missing host", "postgres://user:secret@/cafe_pos_test", "sales", "0123456789ab", "host is required"},
 		{"unsafe base", "postgres://user:secret@localhost/cafe_pos", "sales", "0123456789ab", "must end in _test"},
 		{"unsafe identifier", "postgres://user:secret@localhost/Cafe-pos_test", "sales", "0123456789ab", "not a safe test identifier"},
-		{"unknown package", "postgres://user:secret@localhost/cafe_pos_test", "inventory", "0123456789ab", "unsupported integration package"},
+		{"unknown package", "postgres://user:secret@localhost/cafe_pos_test", "nonexistent", "0123456789ab", "unsupported integration package"},
 		{"invalid suffix", "postgres://user:secret@localhost/cafe_pos_test", "sales", "not-random", "invalid clone suffix"},
 		{"name too long", "postgres://user:secret@localhost/" + strings.Repeat("a", 55) + "_test", "sales", "0123456789ab", "exceeds 63 bytes"},
 		{"dbname override", "postgres://user:secret@localhost/cafe_pos_test?dbname=production", "sales", "0123456789ab", "must not override the database via query parameters"},
@@ -57,7 +57,7 @@ func TestIsEphemeralClone(t *testing.T) {
 	assert.True(t, isEphemeralClone("cafe_pos_test", "cafe_pos_test_sales_0123456789ab"))
 	assert.False(t, isEphemeralClone("cafe_pos_test", "cafe_pos_test"))
 	assert.False(t, isEphemeralClone("cafe_pos_test", "cafe_pos_test_template"))
-	assert.False(t, isEphemeralClone("cafe_pos_test", "cafe_pos_test_inventory_0123456789ab"))
+	assert.True(t, isEphemeralClone("cafe_pos_test", "cafe_pos_test_inventory_0123456789ab"))
 	assert.False(t, isEphemeralClone("cafe_pos_test", "other_test_sales_0123456789ab"))
 }
 

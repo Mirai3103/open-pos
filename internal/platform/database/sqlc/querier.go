@@ -342,6 +342,45 @@ type Querier interface {
 	// sequences[i]; the caller relies on getting exactly len(table_ids) rows back
 	// in that order.
 	InsertTableAssignmentsBatch(ctx context.Context, arg InsertTableAssignmentsBatchParams) ([]InsertTableAssignmentsBatchRow, error)
+	// Inventory Extension queries. Every name starts with Inventory.
+	InventoryCreateIngredient(ctx context.Context, arg InventoryCreateIngredientParams) (InventoryIngredient, error)
+	InventoryDeleteIngredientUnit(ctx context.Context, arg InventoryDeleteIngredientUnitParams) error
+	InventoryDeleteRecipe(ctx context.Context, id uuid.UUID) error
+	InventoryDeleteRecipeLines(ctx context.Context, recipeID uuid.UUID) error
+	InventoryFindRecipe(ctx context.Context, arg InventoryFindRecipeParams) (uuid.UUID, error)
+	InventoryGetIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryGetIngredientUnit(ctx context.Context, arg InventoryGetIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryGetMenuItemForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetMenuItemForRecipeRow, error)
+	InventoryGetOptionForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetOptionForRecipeRow, error)
+	InventoryGetRecipe(ctx context.Context, arg InventoryGetRecipeParams) (InventoryGetRecipeRow, error)
+	InventoryGetSizeForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetSizeForRecipeRow, error)
+	InventoryIngredientUnitInUse(ctx context.Context, id uuid.UUID) (bool, error)
+	InventoryInsertConsumption(ctx context.Context, arg InventoryInsertConsumptionParams) (uuid.UUID, error)
+	InventoryInsertConsumptionLine(ctx context.Context, arg InventoryInsertConsumptionLineParams) error
+	InventoryInsertIngredientCost(ctx context.Context, arg InventoryInsertIngredientCostParams) (InventoryIngredientCost, error)
+	InventoryInsertIngredientUnit(ctx context.Context, arg InventoryInsertIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryInsertRecipe(ctx context.Context, arg InventoryInsertRecipeParams) (uuid.UUID, error)
+	InventoryInsertRecipeLine(ctx context.Context, arg InventoryInsertRecipeLineParams) error
+	// Every recipe line with what it needs to be normalized to Stock Units in Go:
+	// a system unit's factor or an Ingredient Unit's stock quantity.
+	InventoryListBookLines(ctx context.Context) ([]InventoryListBookLinesRow, error)
+	InventoryListCurrentCosts(ctx context.Context) ([]InventoryListCurrentCostsRow, error)
+	// Read-only join into Core tables (spec §7.2 read-model exception).
+	InventoryListGrossProfitUnits(ctx context.Context, arg InventoryListGrossProfitUnitsParams) ([]InventoryListGrossProfitUnitsRow, error)
+	InventoryListIngredientCosts(ctx context.Context, ingredientID uuid.UUID) ([]InventoryIngredientCost, error)
+	InventoryListIngredientUnits(ctx context.Context, ingredientIds []uuid.UUID) ([]InventoryIngredientUnit, error)
+	InventoryListIngredients(ctx context.Context) ([]InventoryIngredient, error)
+	// Read-only join into catalog tables (spec §7.1 read-model exception).
+	InventoryListMenuForCosting(ctx context.Context) ([]InventoryListMenuForCostingRow, error)
+	InventoryListOptionsForCosting(ctx context.Context) ([]InventoryListOptionsForCostingRow, error)
+	InventoryListRecipeLines(ctx context.Context, recipeID uuid.UUID) ([]InventoryListRecipeLinesRow, error)
+	InventoryListUnitComps(ctx context.Context, preparationUnitIds []uuid.UUID) ([]InventoryListUnitCompsRow, error)
+	InventoryLockIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryRenameIngredient(ctx context.Context, arg InventoryRenameIngredientParams) (InventoryIngredient, error)
+	InventoryRetireIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryUpdateIngredientUnit(ctx context.Context, arg InventoryUpdateIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryUpdateRecipeYield(ctx context.Context, arg InventoryUpdateRecipeYieldParams) error
+	InventoryVoidConsumptions(ctx context.Context, arg InventoryVoidConsumptionsParams) error
 	ListActiveIdentities(ctx context.Context) ([]ListActiveIdentitiesRow, error)
 	// The queue's active alerts, oldest first. The Waste join matches only
 	// WASTE alerts, so waste_id resolves through the Waste fact for WASTE and
