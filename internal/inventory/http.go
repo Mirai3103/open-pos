@@ -2,6 +2,8 @@ package inventory
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/Mirai3103/open-pos/internal/platform/httpx"
 	"github.com/Mirai3103/open-pos/internal/response"
@@ -377,6 +379,42 @@ func (s *Slices) handleMenuCosting(c echo.Context) error {
 		return sendError(c, err)
 	}
 	out, err := s.Reads.MenuCosting(c.Request().Context(), actor)
+	if err != nil {
+		return sendError(c, err)
+	}
+	return response.OK(c, out)
+}
+
+// handleGrossProfit returns the gross-profit report.
+//
+//	@Summary		Gross-profit report
+//	@Description	Revenue, cost and gross profit of Preparation Units recorded in [from, to). A management figure: Refunds are excluded.
+//	@Tags			inventory
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			from				query		string	true	"RFC 3339 start (inclusive)"
+//	@Param			to					query		string	true	"RFC 3339 end (exclusive)"
+//	@Param			tz_offset_minutes	query		int		false	"Client UTC offset for day buckets"
+//	@Success		200					{object}	response.APIResponse{data=GrossProfitResponse}
+//	@Failure		400					{object}	response.APIResponse
+//	@Router			/inventory/reports/gross-profit [get]
+func (s *Slices) handleGrossProfit(c echo.Context) error {
+	actor, err := httpx.Actor(c)
+	if err != nil {
+		return sendError(c, err)
+	}
+	from, errFrom := time.Parse(time.RFC3339, c.QueryParam("from"))
+	to, errTo := time.Parse(time.RFC3339, c.QueryParam("to"))
+	if errFrom != nil || errTo != nil {
+		return sendError(c, fmt.Errorf("%w: from and to must be RFC 3339", ErrInvalidPeriod))
+	}
+	offset := 0
+	if raw := c.QueryParam("tz_offset_minutes"); raw != "" {
+		if offset, err = strconv.Atoi(raw); err != nil {
+			return sendError(c, fmt.Errorf("%w: tz_offset_minutes must be an integer", ErrInvalidPeriod))
+		}
+	}
+	out, err := s.Reads.GrossProfit(c.Request().Context(), actor, GrossProfitQuery{From: from, To: to, TZOffsetMinutes: offset})
 	if err != nil {
 		return sendError(c, err)
 	}

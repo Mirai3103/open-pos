@@ -41,4 +41,5 @@ func (s *Slices) RegisterRoutes(v1 *echo.Group, authn *auth.Middleware) {
 	v1.GET("/inventory/recipes/:owner_kind/:owner_id", s.handleGetRecipe, admin...)
 	v1.PUT("/inventory/recipes/:owner_kind/:owner_id", s.handleSetRecipe, admin...)
 	v1.GET("/inventory/costing/menu", s.handleMenuCosting, costs...)
+	v1.GET("/inventory/reports/gross-profit", s.handleGrossProfit, costs...)
 }
