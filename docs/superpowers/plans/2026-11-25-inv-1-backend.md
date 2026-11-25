@@ -26,7 +26,7 @@
 - Every inventory sqlc query name starts with `Inventory`.
 - A sqlc query uses either positional `$n` parameters or `sqlc.arg`/`sqlc.narg`, never both (sqlc rejects mixed queries).
 - Run integration tests with `TEST_DATABASE_URL` set as in the Makefile (`make docker-up` first). Commands below use `make`-equivalent invocations.
-- Commit after every task, with messages ending in `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- Commit after every task. Commit messages carry no `Co-Authored-By` trailer.
 
 ## File Map
 
@@ -349,9 +349,7 @@ Expected: PASS
 
 ```bash
 git add internal/platform/hooks internal/platform/command
-git commit -m "feat(platform): add in-transaction Core hook bus
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(platform): add in-transaction Core hook bus"
 ```
 
 ---
@@ -788,9 +786,7 @@ Expected: PASS, including the four new tests. The existing suites must not chang
 
 ```bash
 git add sql/queries/sales.sql internal/platform/database/sqlc internal/platform/hooks internal/sales/submit.go internal/preparation/remake.go internal/preparation/cancel.go internal/preparation/hooks_integration_test.go
-git commit -m "feat: publish Preparation Unit facts on the Core hook bus
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat: publish Preparation Unit facts on the Core hook bus"
 ```
 
 ---
@@ -1507,9 +1503,7 @@ Expected: PASS
 
 ```bash
 git add internal/platform/database/migrations/000018_create_store_features.sql sql/queries/features.sql internal/platform/database/sqlc internal/platform/features internal/auth/domain.go internal/testdb/config.go cmd/api/main.go
-git commit -m "feat(platform): add store-wide Store Feature switch
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(platform): add store-wide Store Feature switch"
 ```
 
 ---
@@ -1856,9 +1850,7 @@ Expected: PASS
 
 ```bash
 git add internal/platform/database/migrations/000019_create_inventory_slice.sql sqlc.yaml sql/queries/inventory.sql internal/platform/database/sqlc internal/testdb internal/inventory
-git commit -m "feat(inventory): add inventory schema and queries
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add inventory schema and queries"
 ```
 
 ---
@@ -2496,9 +2488,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory
-git commit -m "feat(inventory): add units, rounding and recipe composition
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add units, rounding and recipe composition"
 ```
 
 ---
@@ -3264,9 +3254,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory internal/auth/domain.go
-git commit -m "feat(inventory): add ingredient, unit and cost commands
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add ingredient, unit and cost commands"
 ```
 
 ---
@@ -3891,9 +3879,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory
-git commit -m "feat(inventory): add recipe and batch recipe commands
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add recipe and batch recipe commands"
 ```
 
 ---
@@ -4597,9 +4583,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory cmd/api/main.go
-git commit -m "feat(inventory): expose ingredient and recipe API behind the Store Feature
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): expose ingredient and recipe API behind the Store Feature"
 ```
 
 ---
@@ -4987,9 +4971,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory cmd/api/main.go
-git commit -m "feat(inventory): record Consumption Records through the Core hook bus
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): record Consumption Records through the Core hook bus"
 ```
 
 ---
@@ -5278,9 +5260,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory
-git commit -m "feat(inventory): add menu costing read
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add menu costing read"
 ```
 
 ---
@@ -5707,9 +5687,7 @@ Expected: PASS
 
 ```bash
 git add internal/inventory
-git commit -m "feat(inventory): add gross-profit report
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "feat(inventory): add gross-profit report"
 ```
 
 ---
@@ -5799,9 +5777,7 @@ Then a manual smoke run:
 
 ```bash
 git add internal/inventory/decoupling_test.go CONTEXT.md api/openapi
-git commit -m "docs: add Store Feature and Inventory Extension terms; regenerate API docs
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "docs: add Store Feature and Inventory Extension terms; regenerate API docs"
 ```
 
 ---
