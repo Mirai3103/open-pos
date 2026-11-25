@@ -3,7 +3,7 @@
 
 # Single source of truth for the integration-test database.
 TEST_DATABASE_URL   ?= postgres://cafe_pos:cafe_pos_dev@localhost:5432/cafe_pos_test?sslmode=disable
-GOLANGCI_VERSION    ?= v2.13.2
+GOLANGCI_VERSION    ?= v2.15.0
 GOVULNCHECK_VERSION ?= v1.8.0
 OUTPUT_BINARY       ?= build/app.exe
 
