@@ -82,11 +82,11 @@ func OwnerKindFromPath(segment string) (string, bool) {
 // NormalizeName trims and collapses internal whitespace.
 func NormalizeName(s string) string { return strings.Join(strings.Fields(s), " ") }
 
-// ValidateName checks a normalized name against [1, max] code points.
-func ValidateName(name string, max int) error {
+// ValidateName checks a normalized name against [1, maxLen] code points.
+func ValidateName(name string, maxLen int) error {
 	n := utf8.RuneCountInString(name)
-	if n < 1 || n > max {
-		return fmt.Errorf("%w: must be 1 to %d characters", ErrInvalidName, max)
+	if n < 1 || n > maxLen {
+		return fmt.Errorf("%w: must be 1 to %d characters", ErrInvalidName, maxLen)
 	}
 	return nil
 }
