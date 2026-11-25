@@ -128,3 +128,11 @@ type RecipeResponse struct {
 	YieldQuantity *float64             `json:"yield_quantity"`
 	Lines         []RecipeLineResponse `json:"lines"`
 }
+
+// IngredientDetailResponse is one Ingredient with its cost history (only with
+// inventory.view_costs) and, for a prepared Ingredient, its Batch Recipe.
+type IngredientDetailResponse struct {
+	IngredientResponse
+	CostHistory []CostEntryResponse `json:"cost_history"`
+	BatchRecipe *RecipeResponse     `json:"batch_recipe"`
+}

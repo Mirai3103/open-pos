@@ -15,6 +15,7 @@ import (
 	"github.com/Mirai3103/open-pos/internal/auth"
 	"github.com/Mirai3103/open-pos/internal/catalog"
 	"github.com/Mirai3103/open-pos/internal/httpvalidator"
+	"github.com/Mirai3103/open-pos/internal/inventory"
 	"github.com/Mirai3103/open-pos/internal/platform/config"
 	"github.com/Mirai3103/open-pos/internal/platform/database"
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
@@ -187,6 +188,10 @@ func run(ctx context.Context) error {
 
 	featuresSlices := features.NewSlices(db, queries)
 	featuresSlices.RegisterRoutes(v1, authSlices.Middleware)
+
+	// Inventory Extension (outside the Core POS; gated by its Store Feature).
+	inventorySlices := inventory.NewSlices(db, queries)
+	inventorySlices.RegisterRoutes(v1, authSlices.Middleware)
 
 	// 6. Register Embedded Web SPA & Static Assets
 	if err := web.RegisterHandlers(e); err != nil {
