@@ -299,7 +299,7 @@ type Querier interface {
 	// priority, and linked back to its source. Adds no Order Item or charge.
 	InsertPreparationRemakeUnit(ctx context.Context, arg InsertPreparationRemakeUnitParams) (PreparationUnit, error)
 	InsertPreparationStateCorrection(ctx context.Context, arg InsertPreparationStateCorrectionParams) (PreparationStateCorrection, error)
-	InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) error
+	InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) (uuid.UUID, error)
 	InsertPreparationUnitTransition(ctx context.Context, arg InsertPreparationUnitTransitionParams) error
 	InsertPreparationWaste(ctx context.Context, arg InsertPreparationWasteParams) (PreparationWaste, error)
 	InsertRefund(ctx context.Context, arg InsertRefundParams) (Refund, error)
@@ -487,6 +487,11 @@ type Querier interface {
 	// snapshot rule (a post-sale allocation belongs to history, not the live
 	// capacity) through refund_completed_sale_id.
 	ListPaymentRefundAllocations(ctx context.Context, paymentIds []uuid.UUID) ([]ListPaymentRefundAllocationsRow, error)
+	// The catalog identities each Order Item was sold as, one row per selected
+	// Modifier Option (one row with a NULL option when none), for Core hook
+	// payloads. committed_items deliberately has no size_id; the source draft
+	// item still holds it.
+	ListPreparationUnitSources(ctx context.Context, orderItemIds []uuid.UUID) ([]ListPreparationUnitSourcesRow, error)
 	// Batched projection read for a set of ids already known to exist (e.g. a
 	// cancellation batch), avoiding one GetPreparationUnit round trip per unit.
 	ListPreparationUnitsByIDs(ctx context.Context, preparationUnitIds []uuid.UUID) ([]PreparationUnit, error)
