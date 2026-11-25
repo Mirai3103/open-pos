@@ -1031,6 +1031,371 @@ definitions:
       price_vnd:
         type: integer
     type: object
+  features.FeatureResponse:
+    properties:
+      enabled:
+        type: boolean
+      key:
+        type: string
+    type: object
+  features.Interval:
+    properties:
+      from:
+        type: string
+      to:
+        type: string
+    type: object
+  features.SetFeatureCommand:
+    properties:
+      enabled:
+        type: boolean
+      request_id:
+        type: string
+    type: object
+  inventory.CostEntryResponse:
+    properties:
+      amount_vnd:
+        type: integer
+      cost_per_stock_unit:
+        type: number
+      id:
+        type: string
+      ingredient_id:
+        type: string
+      ingredient_unit_id:
+        type: string
+      quantity:
+        type: number
+      recorded_at:
+        type: string
+      unit_code:
+        type: string
+    type: object
+  inventory.CreateIngredientCommand:
+    properties:
+      kind:
+        type: string
+      name:
+        type: string
+      request_id:
+        type: string
+      stock_unit:
+        type: string
+    type: object
+  inventory.GrossProfitDay:
+    properties:
+      date:
+        type: string
+      figures:
+        $ref: '#/definitions/inventory.GrossProfitFigures'
+    type: object
+  inventory.GrossProfitFigures:
+    properties:
+      cost_vnd:
+        type: number
+      gross_margin_pct:
+        type: number
+      gross_profit_vnd:
+        type: number
+      revenue_vnd:
+        type: integer
+      units:
+        type: integer
+      units_cost_none:
+        type: integer
+      units_cost_partial:
+        type: integer
+      waste_cost_vnd:
+        type: number
+    type: object
+  inventory.GrossProfitItem:
+    properties:
+      figures:
+        $ref: '#/definitions/inventory.GrossProfitFigures'
+      item_name:
+        type: string
+      menu_item_id:
+        type: string
+      sizes:
+        items:
+          $ref: '#/definitions/inventory.GrossProfitSize'
+        type: array
+    type: object
+  inventory.GrossProfitResponse:
+    properties:
+      days:
+        items:
+          $ref: '#/definitions/inventory.GrossProfitDay'
+        type: array
+      disabled_intervals:
+        items:
+          $ref: '#/definitions/features.Interval'
+        type: array
+      from:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/inventory.GrossProfitItem'
+        type: array
+      to:
+        type: string
+      totals:
+        $ref: '#/definitions/inventory.GrossProfitFigures'
+    type: object
+  inventory.GrossProfitSize:
+    properties:
+      figures:
+        $ref: '#/definitions/inventory.GrossProfitFigures'
+      size_name:
+        type: string
+    type: object
+  inventory.IngredientDetailResponse:
+    properties:
+      batch_recipe:
+        $ref: '#/definitions/inventory.RecipeResponse'
+      cost_history:
+        items:
+          $ref: '#/definitions/inventory.CostEntryResponse'
+        type: array
+      cost_per_stock_unit:
+        type: number
+      id:
+        type: string
+      kind:
+        type: string
+      name:
+        type: string
+      retired:
+        type: boolean
+      stock_unit:
+        type: string
+      units:
+        items:
+          $ref: '#/definitions/inventory.IngredientUnitResponse'
+        type: array
+    type: object
+  inventory.IngredientResponse:
+    properties:
+      cost_per_stock_unit:
+        type: number
+      id:
+        type: string
+      kind:
+        type: string
+      name:
+        type: string
+      retired:
+        type: boolean
+      stock_unit:
+        type: string
+      units:
+        items:
+          $ref: '#/definitions/inventory.IngredientUnitResponse'
+        type: array
+    type: object
+  inventory.IngredientUnitInput:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      stock_quantity:
+        type: number
+    type: object
+  inventory.IngredientUnitResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      stock_quantity:
+        type: number
+    type: object
+  inventory.ItemCosting:
+    properties:
+      category_id:
+        type: string
+      category_name:
+        type: string
+      cost_status:
+        type: string
+      cost_vnd:
+        type: number
+      item_name:
+        type: string
+      item_recipe_ignored:
+        type: boolean
+      margin_pct:
+        type: number
+      margin_vnd:
+        type: number
+      menu_item_id:
+        type: string
+      price_vnd:
+        type: integer
+      size_id:
+        type: string
+      size_name:
+        type: string
+    type: object
+  inventory.MenuCostingResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/inventory.ItemCosting'
+        type: array
+      options:
+        items:
+          $ref: '#/definitions/inventory.OptionCosting'
+        type: array
+      prepared_ingredients:
+        items:
+          $ref: '#/definitions/inventory.PreparedCosting'
+        type: array
+    type: object
+  inventory.OptionCosting:
+    properties:
+      complete:
+        type: boolean
+      cost_delta_vnd:
+        type: number
+      group_id:
+        type: string
+      group_name:
+        type: string
+      has_recipe:
+        type: boolean
+      modifier_option_id:
+        type: string
+      option_name:
+        type: string
+      priced_without_recipe:
+        type: boolean
+      surcharge_vnd:
+        type: integer
+    type: object
+  inventory.PreparedCosting:
+    properties:
+      cost_per_stock_unit:
+        type: number
+      ingredient_id:
+        type: string
+      name:
+        type: string
+      stock_unit:
+        type: string
+    type: object
+  inventory.RecipeLineInput:
+    properties:
+      ingredient_id:
+        type: string
+      quantity:
+        type: number
+      unit:
+        $ref: '#/definitions/inventory.UnitRef'
+    type: object
+  inventory.RecipeLineResponse:
+    properties:
+      ingredient_id:
+        type: string
+      ingredient_kind:
+        type: string
+      ingredient_name:
+        type: string
+      ingredient_unit_id:
+        type: string
+      ingredient_unit_name:
+        type: string
+      quantity:
+        type: number
+      stock_unit:
+        type: string
+      unit_code:
+        type: string
+    type: object
+  inventory.RecipeResponse:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/inventory.RecipeLineResponse'
+        type: array
+      owner_id:
+        type: string
+      owner_kind:
+        type: string
+      yield_quantity:
+        type: number
+    type: object
+  inventory.RecordCostCommand:
+    properties:
+      amount_vnd:
+        type: integer
+      quantity:
+        type: number
+      request_id:
+        type: string
+      unit:
+        $ref: '#/definitions/inventory.UnitRef'
+    type: object
+  inventory.RenameIngredientCommand:
+    properties:
+      name:
+        type: string
+      request_id:
+        type: string
+    type: object
+  inventory.RetireIngredientCommand:
+    properties:
+      request_id:
+        type: string
+    type: object
+  inventory.SetBatchRecipeCommand:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/inventory.RecipeLineInput'
+        type: array
+      request_id:
+        type: string
+      yield_quantity:
+        type: number
+    type: object
+  inventory.SetIngredientUnitsCommand:
+    properties:
+      request_id:
+        type: string
+      units:
+        items:
+          $ref: '#/definitions/inventory.IngredientUnitInput'
+        type: array
+    type: object
+  inventory.SetRecipeCommand:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/inventory.RecipeLineInput'
+        type: array
+      request_id:
+        type: string
+    type: object
+  inventory.SystemUnit:
+    properties:
+      base_code:
+        type: string
+      code:
+        type: string
+      dimension:
+        type: string
+      factor_to_base:
+        type: number
+    type: object
+  inventory.UnitRef:
+    properties:
+      ingredient_unit_id:
+        type: string
+      unit_code:
+        type: string
+    type: object
   preparation.AcknowledgeAlertCommand:
     properties:
       request_id:
@@ -5265,6 +5630,488 @@ paths:
       summary: Ngừng kinh doanh kích thước món
       tags:
       - Catalog
+  /features:
+    get:
+      description: Returns each store-wide feature switch as key → enabled
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: boolean
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List Store Features
+      tags:
+      - features
+  /features/{key}:
+    put:
+      consumes:
+      - application/json
+      description: Turns a store-wide feature on or off for every client. Setting
+        the current value again is a no-op.
+      parameters:
+      - description: Feature key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: New state
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/features.SetFeatureCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/features.FeatureResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Set a Store Feature
+      tags:
+      - features
+  /inventory/costing/menu:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.MenuCostingResponse'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Menu costing
+      tags:
+      - inventory
+  /inventory/ingredients:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/inventory.IngredientResponse'
+                  type: array
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List Ingredients
+      tags:
+      - inventory
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Ingredient
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.CreateIngredientCommand'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.IngredientResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create an Ingredient
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}:
+    get:
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.IngredientDetailResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an Ingredient
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}/batch-recipe:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Prepared Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      - description: Batch Recipe
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.SetBatchRecipeCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.RecipeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Replace a Batch Recipe
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}/costs:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      - description: Cost
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.RecordCostCommand'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.CostEntryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Record an Ingredient cost
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}/name:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      - description: New name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.RenameIngredientCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.IngredientResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Rename an Ingredient
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}/retirement:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.RetireIngredientCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.IngredientResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retire an Ingredient
+      tags:
+      - inventory
+  /inventory/ingredients/{ingredient_id}/units:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: ingredient_id
+        required: true
+        type: string
+      - description: Units
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.SetIngredientUnitsCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.IngredientResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Replace an Ingredient's units
+      tags:
+      - inventory
+  /inventory/recipes/{owner_kind}/{owner_id}:
+    get:
+      parameters:
+      - description: menu-item, size or modifier-option
+        in: path
+        name: owner_kind
+        required: true
+        type: string
+      - description: Owner ID
+        in: path
+        name: owner_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.RecipeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a Recipe
+      tags:
+      - inventory
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: menu-item, size or modifier-option
+        in: path
+        name: owner_kind
+        required: true
+        type: string
+      - description: Owner ID
+        in: path
+        name: owner_id
+        required: true
+        type: string
+      - description: Recipe
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inventory.SetRecipeCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.RecipeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Replace a Recipe
+      tags:
+      - inventory
+  /inventory/reports/gross-profit:
+    get:
+      description: 'Revenue, cost and gross profit of Preparation Units recorded in
+        [from, to). A management figure: Refunds are excluded.'
+      parameters:
+      - description: RFC 3339 start (inclusive)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: RFC 3339 end (exclusive)
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: Client UTC offset for day buckets
+        in: query
+        name: tz_offset_minutes
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inventory.GrossProfitResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Gross-profit report
+      tags:
+      - inventory
+  /inventory/units:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/inventory.SystemUnit'
+                  type: array
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List system units
+      tags:
+      - inventory
   /preparation/alerts/{alert_id}/acknowledge:
     post:
       consumes:

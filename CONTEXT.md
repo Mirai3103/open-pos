@@ -64,6 +64,12 @@ _Avoid_: Sales Shift, shared device session, retrospectively selected actor
 The area of the cafe a Staff Identity declares they are working in for the current Staff Access Session — cashier, manager, or preparation — which the session's inactivity lock policy depends on, since a preparation display tolerates longer idle time than a counter station.
 _Avoid_: Operational Role, screen, device mode, active role
 
+**Store Feature**:
+A store-wide, Manager-controlled switch that turns an extension outside the
+Core POS on or off for every client at once, retaining who changed it and when;
+it is distinct from per-device preferences on the same Settings screen.
+_Avoid_: Device preference, build flag, per-staff setting
+
 **Manager Approval**:
 A Manager's fresh-PIN authorization of an exceptional business action at the time it is performed; a Manager may authorize their own action, but another role cannot borrow or reuse that authority.
 _Avoid_: Shared manager code, standing approval, two-person control
@@ -299,3 +305,51 @@ _Avoid_: Order owner, exclusive tab
 **Completed Sale**:
 The immutable outcome of a Service Session that staff close after every Preparation Unit, required Remake, Check, Refund, submission, and correction has reached its permitted terminal state.
 _Avoid_: Paid Order, receipt, open tab
+
+---
+
+## Inventory Extension
+
+The following terms lie outside the Core POS boundary. They belong to the
+Inventory Extension, which the Core POS hosts behind a Store Feature switch but
+does not depend on.
+
+**Ingredient**:
+Something the cafe buys or prepares and uses in drinks or food, tracked in one
+Stock Unit. It is either *raw* (bought) or *prepared* (made in batches from raw
+ingredients, such as phin coffee base or cooked tapioca pearls).
+_Avoid_: Product, SKU, Menu Item, Modifier Option
+
+**Stock Unit**:
+The single unit, `g`, `ml` or `piece`, in which an Ingredient's quantities and
+cost are stored.
+_Avoid_: Purchase unit, display unit
+
+**Ingredient Unit**:
+A unit defined for one Ingredient (such as "tbsp", "can", "bag") with a fixed
+number of Stock Units, because the same name weighs differently for different
+ingredients.
+_Avoid_: Global unit, conversion table
+
+**Ingredient Cost**:
+The cost in VND of one Stock Unit of a raw Ingredient, derived from an entered
+purchase price ("25,000 VND per can"); a prepared Ingredient's cost is derived
+from its Batch Recipe instead.
+_Avoid_: Selling price, Menu Price
+
+**Batch Recipe**:
+The raw Ingredients that one batch of a prepared Ingredient consumes, and the
+quantity of the prepared Ingredient that batch yields.
+_Avoid_: Recipe, nested recipe
+
+**Recipe**:
+The Ingredients that one unit of a Menu Item without Sizes, or one Size,
+consumes; for a Modifier Option, the quantities it adds to or removes from that
+Recipe.
+_Avoid_: Batch Recipe, Preparation Note
+
+**Consumption Record**:
+The immutable statement of which Ingredients one Preparation Unit consumed and
+what they cost when the unit was created; it is voided, not deleted, when the
+unit is cancelled.
+_Avoid_: Stock movement, Order Item cost, recalculated cost
