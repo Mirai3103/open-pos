@@ -297,4 +297,3 @@ func Consumption(t *testing.T, unitID uuid.UUID) (consumptionRow, bool) {
 	require.NoError(t, err)
 	return r, true
 }
-
