@@ -10,6 +10,7 @@ import (
 
 	"github.com/Mirai3103/open-pos/internal/auth"
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/google/uuid"
 )
 
@@ -74,6 +75,9 @@ type MutationContext struct {
 	Actor Actor
 	// Approver is nil when the spec required no approval.
 	Approver *auth.ApproverSummary
+	// Hooks is the Runner's Core hook bus, nil when none is attached. Bodies
+	// publish Core facts on it with the transaction's Queries.
+	Hooks *hooks.Bus
 }
 
 // AuditRecord describes the business audit event written after a successful
@@ -198,7 +202,9 @@ func ExecuteMutation[T any](ctx context.Context, r *Runner, actor Actor,
 	}
 
 	// 9. Run the mutation.
-	resultCode, result, audit, err := fn(MutationContext{Queries: q, Tx: tx, Actor: actor, Approver: approver})
+	resultCode, result, audit, err := fn(MutationContext{
+		Queries: q, Tx: tx, Actor: actor, Approver: approver, Hooks: r.hooks,
+	})
 	if err != nil {
 		return 0, zero, err
 	}
