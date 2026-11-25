@@ -4,7 +4,10 @@ package inventory_test
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -12,6 +15,10 @@ import (
 	"github.com/Mirai3103/open-pos/internal/inventory"
 	"github.com/Mirai3103/open-pos/internal/platform/command"
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/features"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
+	"github.com/Mirai3103/open-pos/internal/preparation"
+	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -159,3 +166,135 @@ func seedRecipes(t *testing.T, c *inventory.Commands, manager command.Actor, m m
 	setRecipe(t, c, manager, inventory.OwnerSize, m.SizeL, line(f.Tea.ID, 280, "ml"))
 	setRecipe(t, c, manager, inventory.OwnerModifierOption, m.PearlOptionID, line(f.Pearls.ID, 50, "g"))
 }
+
+var shiftOnce sync.Once
+
+// invEnv drives real Submit, Cancel, Waste and Remake with Inventory
+// subscribed on a bus, exactly as cmd/api/main.go wires it.
+type invEnv struct {
+	Sales    *sales.Runner
+	Prep     *preparation.Runner
+	Commands *inventory.Commands
+	Features *features.Slices
+	Manager  command.Actor
+	TableID  uuid.UUID
+	Menu     menuFixture
+	Ing      ingredientsFixture
+}
+
+func newInvEnv(t *testing.T) *invEnv {
+	t.Helper()
+	q := queries()
+	env := &invEnv{
+		Sales:    sales.NewRunner(invTestDB, q),
+		Prep:     preparation.NewRunner(invTestDB, q),
+		Commands: newCommands(),
+		Features: features.NewSlices(invTestDB, q),
+		Manager:  seedActor(t, auth.RoleManager),
+	}
+	bus := hooks.New()
+	inventory.Subscribe(bus)
+	env.Sales.SetHooks(bus)
+	env.Prep.SetHooks(bus)
+
+	shiftOnce.Do(func() {
+		_, err := q.OpenSalesShift(context.Background(), sqlc.OpenSalesShiftParams{
+			OpenedByStaffIdentityID: env.Manager.StaffID, OpeningFloatVnd: 100000,
+		})
+		require.NoError(t, err)
+	})
+	require.NoError(t, invTestDB.QueryRow(`INSERT INTO tables (name, normalized_name, available)
+		VALUES ($1, lower($1), true) RETURNING id`, uniqueName("Bàn")).Scan(&env.TableID))
+
+	env.Menu = seedMenu(t)
+	env.Ing = seedIngredients(t, env.Commands, env.Manager)
+	seedRecipes(t, env.Commands, env.Manager, env.Menu, env.Ing)
+	return env
+}
+
+func (e *invEnv) SetFeature(t *testing.T, on bool) {
+	t.Helper()
+	_, _, err := e.Features.Set.Handle(context.Background(), e.Manager, features.SetFeatureCommand{
+		RequestID: uuid.New(), Key: inventory.FeatureKey, Enabled: &on,
+	})
+	require.NoError(t, err)
+}
+
+// Submit sells qty of one configuration dine-in and returns its units.
+func (e *invEnv) Submit(t *testing.T, item uuid.UUID, size *uuid.UUID, options []uuid.UUID, qty int32) []sales.PreparationUnitResponse {
+	t.Helper()
+	ctx := context.Background()
+	_, session, err := sales.NewStartDineInSessionHandler(e.Sales).Handle(ctx, e.Manager,
+		sales.StartDineInSessionCommand{RequestID: uuid.New(), TableIDs: []uuid.UUID{e.TableID}})
+	require.NoError(t, err)
+	add := sales.AddDraftItemCommand{RequestID: uuid.New(), ServiceSessionID: session.ID, MenuItemID: item, SizeID: size}
+	if options != nil {
+		add.ModifierOptionIDs = &options
+	}
+	_, draft, err := sales.NewAddDraftItemHandler(e.Sales).Handle(ctx, e.Manager, add)
+	require.NoError(t, err)
+	if qty > 1 {
+		_, _, err = sales.NewSetDraftItemQuantityHandler(e.Sales).Handle(ctx, e.Manager, sales.SetDraftItemQuantityCommand{
+			RequestID: uuid.New(), ServiceSessionID: session.ID, DraftItemID: draft.Draft.Items[0].ID, Quantity: &qty,
+		})
+		require.NoError(t, err)
+	}
+	_, _, err = sales.NewCommitOrderDraftHandler(e.Sales).Handle(ctx, e.Manager,
+		sales.CommitOrderDraftCommand{RequestID: uuid.New(), ServiceSessionID: session.ID})
+	require.NoError(t, err)
+	_, submitted, err := sales.NewSubmitOrderHandler(e.Sales).Handle(ctx, e.Manager,
+		sales.SubmitOrderCommand{RequestID: uuid.New(), ServiceSessionID: session.ID})
+	require.NoError(t, err)
+	return submitted.PreparationUnits
+}
+
+func (e *invEnv) Cancel(t *testing.T, unitID uuid.UUID) {
+	t.Helper()
+	_, _, err := preparation.NewCancelUnitsHandler(e.Prep).Handle(context.Background(), e.Manager, preparation.CancelUnitsCommand{
+		RequestID: uuid.New(), PreparationUnitIDs: []uuid.UUID{unitID},
+		Kind: preparation.CancelKindCancellation, Reason: preparation.ReasonOrderEntryError,
+	})
+	require.NoError(t, err)
+}
+
+// WasteAndRemake starts, wastes and remakes a unit, returning the remake unit id.
+func (e *invEnv) WasteAndRemake(t *testing.T, unitID uuid.UUID) uuid.UUID {
+	t.Helper()
+	ctx := context.Background()
+	_, _, err := preparation.NewAdvanceUnitHandler(e.Prep).Handle(ctx, e.Manager, preparation.AdvanceUnitCommand{
+		RequestID: uuid.New(), UnitID: unitID, TargetState: preparation.StateInPreparation,
+	})
+	require.NoError(t, err)
+	_, waste, err := preparation.NewWasteUnitHandler(e.Prep).Handle(ctx, e.Manager, preparation.WasteUnitCommand{
+		RequestID: uuid.New(), UnitID: unitID, Reason: preparation.ReasonPreparationError,
+	})
+	require.NoError(t, err)
+	_, remade, err := preparation.NewRemakeUnitHandler(e.Prep).Handle(ctx, e.Manager, preparation.RemakeUnitCommand{
+		RequestID: uuid.New(), WasteID: waste.ID, Reason: preparation.ReasonPreparationError,
+	})
+	require.NoError(t, err)
+	return remade.Unit.ID
+}
+
+type consumptionRow struct {
+	Status, CostStatus string
+	Total              float64
+	SizeID             uuid.NullUUID
+	Lines              int
+}
+
+// Consumption reads a unit's record; ok is false when none exists.
+func Consumption(t *testing.T, unitID uuid.UUID) (consumptionRow, bool) {
+	t.Helper()
+	var r consumptionRow
+	err := invTestDB.QueryRow(`SELECT c.status, c.cost_status, c.cost_total_vnd::float8, c.size_id,
+		(SELECT count(*) FROM inventory_consumption_lines l WHERE l.consumption_id = c.id)
+		FROM inventory_consumptions c WHERE c.preparation_unit_id = $1`, unitID).
+		Scan(&r.Status, &r.CostStatus, &r.Total, &r.SizeID, &r.Lines)
+	if errors.Is(err, sql.ErrNoRows) {
+		return r, false
+	}
+	require.NoError(t, err)
+	return r, true
+}
+

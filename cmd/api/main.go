@@ -20,6 +20,7 @@ import (
 	"github.com/Mirai3103/open-pos/internal/platform/database"
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
 	"github.com/Mirai3103/open-pos/internal/platform/features"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/Mirai3103/open-pos/internal/preparation"
 	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/Mirai3103/open-pos/internal/shift"
@@ -186,12 +187,18 @@ func run(ctx context.Context) error {
 	preparationSlices := preparation.NewSlices(db, queries)
 	preparationSlices.RegisterRoutes(v1, authSlices.Middleware)
 
+	// Core hook bus: Core modules publish, extensions subscribe.
+	bus := hooks.New()
+	salesSlices.Runner.SetHooks(bus)
+	preparationSlices.Runner.SetHooks(bus)
+
 	featuresSlices := features.NewSlices(db, queries)
 	featuresSlices.RegisterRoutes(v1, authSlices.Middleware)
 
 	// Inventory Extension (outside the Core POS; gated by its Store Feature).
 	inventorySlices := inventory.NewSlices(db, queries)
 	inventorySlices.RegisterRoutes(v1, authSlices.Middleware)
+	inventory.Subscribe(bus)
 
 	// 6. Register Embedded Web SPA & Static Assets
 	if err := web.RegisterHandlers(e); err != nil {
