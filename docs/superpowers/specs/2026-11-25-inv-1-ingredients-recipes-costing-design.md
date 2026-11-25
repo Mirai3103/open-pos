@@ -612,6 +612,14 @@ the menu's non-retired entities:
 
 The base cost excludes Option deltas. The UI shows Options separately.
 
+Recipes are owned by `inventory`, not `catalog`: `catalog` is unchanged and
+unaware of them. This read joins catalog tables (`menu_items`,
+`menu_item_sizes`, `modifier_options`, categories, prices) **read-only**, under
+the same read-model exception as §7.2. The recipe foreign keys use
+`ON DELETE RESTRICT`. This never blocks a catalog command, because catalog only
+retires menu entities and never deletes them (no `DELETE FROM` on those tables
+in `sql/queries`).
+
 ### 7.2 Gross-profit report (period)
 
 A read-only projection over `ACTIVE` Consumption Records with `recorded_at` in
