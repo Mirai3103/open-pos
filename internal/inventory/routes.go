@@ -27,6 +27,7 @@ func NewSlices(db *sql.DB, queries *sqlc.Queries) *Slices {
 func (s *Slices) RegisterRoutes(v1 *echo.Group, authn *auth.Middleware) {
 	gate := features.RequireEnabled(s.Runner.Queries(), FeatureKey)
 	admin := []echo.MiddlewareFunc{authn.RequireAuth(), gate, authn.RequireCapability(CapAdminister)}
+	costs := []echo.MiddlewareFunc{authn.RequireAuth(), gate, authn.RequireCapability(CapViewCosts)}
 
 	v1.GET("/inventory/units", s.handleListUnits, admin...)
 	v1.GET("/inventory/ingredients", s.handleListIngredients, admin...)
@@ -39,4 +40,5 @@ func (s *Slices) RegisterRoutes(v1 *echo.Group, authn *auth.Middleware) {
 	v1.PUT("/inventory/ingredients/:ingredient_id/batch-recipe", s.handleSetBatchRecipe, admin...)
 	v1.GET("/inventory/recipes/:owner_kind/:owner_id", s.handleGetRecipe, admin...)
 	v1.PUT("/inventory/recipes/:owner_kind/:owner_id", s.handleSetRecipe, admin...)
+	v1.GET("/inventory/costing/menu", s.handleMenuCosting, costs...)
 }

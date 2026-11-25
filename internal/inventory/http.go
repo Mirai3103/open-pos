@@ -361,3 +361,24 @@ func (s *Slices) handleSetRecipe(c echo.Context) error {
 	}
 	return httpx.SendResult(c, status, out)
 }
+
+// handleMenuCosting returns current cost and margin per item, size and option.
+//
+//	@Summary	Menu costing
+//	@Tags		inventory
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Success	200	{object}	response.APIResponse{data=MenuCostingResponse}
+//	@Failure	403	{object}	response.APIResponse
+//	@Router		/inventory/costing/menu [get]
+func (s *Slices) handleMenuCosting(c echo.Context) error {
+	actor, err := httpx.Actor(c)
+	if err != nil {
+		return sendError(c, err)
+	}
+	out, err := s.Reads.MenuCosting(c.Request().Context(), actor)
+	if err != nil {
+		return sendError(c, err)
+	}
+	return response.OK(c, out)
+}
