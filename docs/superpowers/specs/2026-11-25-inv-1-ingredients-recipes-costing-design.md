@@ -30,6 +30,18 @@ the Loyalty Program is ([domain-rationale/03](../../domain-rationale/03-define-l
 the Core POS must keep selling when the extension has no data, wrong data, or
 is not wired at all.
 
+Two properties make the extension loosely coupled:
+
+- **The Core POS does not know the extension exists.** Core modules publish
+  facts about their own records on a generic in-transaction hook bus (§4).
+  Inventory subscribes to them. Removing `internal/inventory` and its one
+  registration line in `cmd/api/main.go` leaves the Core POS building and
+  behaving exactly as before.
+- **The extension is off unless a Manager turns it on.** A store-wide
+  **Store Feature** switch (§4.6), set in **Cài đặt**, gates recording, the
+  `/inventory` API and the web tabs. Turning it off stops everything and keeps
+  the data, and turning it back on resumes from there.
+
 | # | Sub-project | Delivers | Depends on |
 |---|---|---|---|
 | **INV-1** | Ingredients, Recipes, Costing (this spec) | Ingredient catalog, units, costs, recipes, Consumption Records, menu costing, gross-profit report | — |
@@ -51,6 +63,8 @@ shape and the Consumption Record are made with INV-2 to INV-4 in mind.
 4. Show the current cost and gross margin of every Menu Item, Size and
    Modifier Option.
 5. Report gross profit for a period from Consumption Records.
+6. Couple the extension to the Core POS only through a generic hook bus, and
+   gate it with a store-wide Store Feature switch, off by default.
 
 ### Non-Goals
 
@@ -59,8 +73,9 @@ shape and the Consumption Record are made with INV-2 to INV-4 in mind.
 - Alerts and automatic Availability changes (INV-4).
 - Updating ingredient costs from receipts (INV-2). INV-1 costs are entered.
 - A recipe view for Baristas without costs. Possible later; no capability now.
-- Consumption for Outage Recovery Entries. Phase 10 is not built; it must call
-  the same recorder when it is.
+- Consumption for Outage Recovery Entries. Phase 10 is not built. When it is,
+  it publishes its own fact on the hook bus, and inventory decides then whether
+  to subscribe.
 - Filtering the report by Sales Shift.
 - Refunds in gross profit (§7.2).
 - Recipe versioning. History lives in Consumption Records.
@@ -112,6 +127,15 @@ The immutable statement of which Ingredients one Preparation Unit consumed and
 what they cost when the unit was created; it is voided, not deleted, when the
 unit is cancelled.
 _Avoid_: Stock movement, Order Item cost, recalculated cost
+
+The following term is added to the Core POS **Language** section, because the
+switch itself belongs to the Core POS even though what it gates does not:
+
+**Store Feature**:
+A store-wide, Manager-controlled switch that turns an extension outside the
+Core POS on or off for every client at once, retaining who changed it and when;
+it is distinct from per-device preferences on the same Settings screen.
+_Avoid_: Device preference, build flag, per-staff setting
 
 ---
 
@@ -196,63 +220,80 @@ are the loaded Recipes and costs, and its output is the lines, total and status.
 
 ---
 
-## 4. The Consumption Boundary
+## 4. Coupling: Hook Bus and Store Feature
 
 ### 4.1 Lifecycle
 
-| Core POS event | Site | Effect |
+| Core POS fact | Published by | Inventory reaction |
 |---|---|---|
-| Submit creates N units | `sales.applySubmitOrder` → `insertOrderItems` | N `ACTIVE` records |
-| Remake creates a unit | `preparation.applyRemake` → `insertRemakeUnit` | One `ACTIVE` record for the new unit |
-| Cancellation | `preparation.cancelUnitWrites.cancelUnit` | That unit's record becomes `VOIDED`, with `voided_at` |
-| Waste | — | None. The record stays `ACTIVE`: ingredients were used |
-| Preparation State Correction | — | None. Corrections only step back along `FULFILLED → READY → IN_PREPARATION → QUEUED` and never touch `CANCELLED` or `WASTED` (`preparation.RequiredPriorState`) |
+| Preparation Units created by Submit | `sales.applySubmitOrder` → `insertOrderItems` | N `ACTIVE` records (when enabled) |
+| Preparation Unit created by Remake | `preparation.applyRemake` → `insertRemakeUnit` | One `ACTIVE` record for the new unit (when enabled) |
+| Preparation Units cancelled | `preparation.cancelUnitWrites.cancelUnit` | Existing records become `VOIDED`, with `voided_at`. This runs **even when disabled** (§4.6) |
+| Waste | — (not published) | None. The record stays `ACTIVE`: ingredients were used |
+| Preparation State Correction | — (not published) | None. Corrections only step back along `FULFILLED → READY → IN_PREPARATION → QUEUED` and never touch `CANCELLED` or `WASTED` (`preparation.RequiredPriorState`) |
 
-### 4.2 Interfaces
+### 4.2 The hook bus (`internal/platform/hooks`)
 
-Each calling module declares the narrow interface it needs, in its own package:
+A synchronous, in-process bus whose subscribers run **inside the publishing
+transaction**. It carries Core POS facts in Core POS language. Nothing in it
+mentions inventory, consumption or cost.
 
 ```go
-// internal/sales/consumption.go
-type ConsumedUnit struct {
+package hooks
+
+type CreatedUnit struct {
     PreparationUnitID uuid.UUID
     MenuItemID        uuid.UUID
     SizeID            *uuid.UUID
     ModifierOptionIDs []uuid.UUID
 }
 
-type ConsumptionRecorder interface {
-    Record(ctx context.Context, q *sqlc.Queries, units []ConsumedUnit) error
+type PreparationUnitsCreated struct {
+    Origin string        // "SUBMIT" or "REMAKE"
+    Units  []CreatedUnit
+    At     time.Time
 }
+
+type PreparationUnitsCancelled struct {
+    PreparationUnitIDs []uuid.UUID
+    At                 time.Time
+}
+
+type Bus struct { /* subscriber slices; zero value has none */ }
+
+func (b *Bus) OnPreparationUnitsCreated(fn func(context.Context, *sqlc.Queries, PreparationUnitsCreated) error)
+func (b *Bus) OnPreparationUnitsCancelled(fn func(context.Context, *sqlc.Queries, PreparationUnitsCancelled) error)
+
+func (b *Bus) PublishPreparationUnitsCreated(ctx context.Context, q *sqlc.Queries, ev PreparationUnitsCreated) error
+func (b *Bus) PublishPreparationUnitsCancelled(ctx context.Context, q *sqlc.Queries, ev PreparationUnitsCancelled) error
 ```
 
-```go
-// internal/preparation/consumption.go
-type ConsumptionRecorder interface {
-    Record(ctx context.Context, q *sqlc.Queries, units []ConsumedUnit) error
-    Void(ctx context.Context, q *sqlc.Queries, unitIDs []uuid.UUID, at time.Time) error
-}
-```
+- **Typed events, not `any`.** Each fact has its own `On…` and `Publish…`
+  pair. Adding a fact later means adding a pair.
+- **A nil or empty bus is a no-op.** The `sales` and `preparation` `Runner`s
+  take a `*hooks.Bus` option. Tests and builds that pass none behave exactly
+  as today.
+- **Subscribers run in registration order** with the mutation's
+  `*sqlc.Queries`. The first error is returned to the publisher and aborts the
+  transaction.
+- **The subscriber contract** (documented on the type): return only database
+  errors, never business errors (§4.4).
+- `cmd/api/main.go` creates one bus, passes it to the `sales` and `preparation`
+  runners, and calls `inventory.Subscribe(bus, featureGate)`. That one line is
+  the extension's only wiring.
 
-- `ConsumedUnit` is a plain struct in each package. `internal/inventory`
-  imports neither `sales` nor `preparation`. It exposes
-  `inventory.Recorder`, which satisfies both interfaces through two thin
-  adapters in the router wiring.
-- Both `Runner`s get the recorder as a constructor option.
-- The default is `NoopConsumptionRecorder`, so existing tests and any build
-  without inventory keep today's behaviour exactly.
-- The calls use the mutation's `*sqlc.Queries`, so they run in the same
-  transaction as the unit insert or cancellation.
+### 4.3 Building the payload
 
-### 4.3 Building `ConsumedUnit`
+The publisher fills the payload from its own tables. Subscribers never read
+Core POS tables on the write path.
 
 - `InsertPreparationUnit` becomes `:one ... RETURNING id`, so Submit and Remake
   know each new unit's id.
-- `committed_items` deliberately has no `size_id`. The caller resolves it from
-  its own tables through one new shared query:
+- `committed_items` deliberately has no `size_id`. The publisher resolves it
+  through one new query in `sql/queries/sales.sql`:
 
 ```sql
--- name: ListConsumptionSources :many
+-- name: ListPreparationUnitSources :many
 SELECT oi.id AS order_item_id, ci.menu_item_id, odi.size_id,
        coalesce(array_agg(cimo.modifier_option_id)
                 FILTER (WHERE cimo.modifier_option_id IS NOT NULL),
@@ -270,13 +311,13 @@ order item.
 
 ### 4.4 Never block a sale
 
-- `Recorder.Record` and `Recorder.Void` **return no business errors**. A missing
-  Recipe, missing cost, retired Ingredient, retired Menu Item or unknown Size
-  produces a record with the matching `cost_status`.
+- Inventory's subscribers **return no business errors**. A missing Recipe,
+  missing cost, retired Ingredient, retired Menu Item or unknown Size produces a
+  record with the matching `cost_status`.
 - Only database errors are returned. They abort the transaction exactly as any
   other database error in Submit, Remake or Cancel does today.
-- `Void` on a unit that has no record is a no-op. Such units come from before
-  INV-1 or from a build without the recorder.
+- Voiding a unit that has no record is a no-op. Such units come from before
+  INV-1 or from a period when the feature was off.
 - Recording is idempotent per unit through the unique `preparation_unit_id`
   (`ON CONFLICT DO NOTHING`). The command pipeline's request idempotency already
   prevents replays. This is the database backstop.
@@ -289,11 +330,75 @@ order item.
 - Each line snapshots the Ingredient name, kind and Stock Unit, so later renames
   do not rewrite history.
 
+### 4.6 The Store Feature switch (`internal/platform/features`)
+
+A generic, store-wide switch kept on the server. The `inventory` key is the
+first one, and a future Loyalty Program can reuse it.
+
+- `features.Gate` has `Enabled(ctx, q *sqlc.Queries, key string) (bool, error)`.
+  It reads `store_features` inside the caller's transaction, so a request sees
+  the switch exactly as of its own transaction. An unknown key is off.
+- **Default: off.** The migration seeds `('inventory', false)`.
+- **When off:**
+  - The `PreparationUnitsCreated` subscriber returns immediately. No record is
+    written, and the Preparation Units in that period have no Consumption
+    Record.
+  - The `PreparationUnitsCancelled` subscriber **still voids existing
+    records**. A unit recorded while on and cancelled after a Manager turned the
+    feature off would otherwise keep a cost it never incurred. This corrects
+    existing data and records nothing new.
+  - Every `/inventory/*` route returns `403` with code `FEATURE_DISABLED`,
+    through a middleware in `inventory.RegisterRoutes`.
+  - The web hides the inventory tabs (§8).
+  - Ingredients, Recipes, costs and Consumption Records are kept unchanged.
+- **When turned back on:** recording resumes from the next Preparation Unit.
+  Nothing is backfilled.
+- **Changing it:** `PUT /features/:key` with `{ "enabled": bool, "request_id" }`.
+  It requires the new Manager-only capability `features.administer`. It is a
+  normal audited mutation (`STORE_FEATURE_ENABLED` / `STORE_FEATURE_DISABLED`)
+  and needs no fresh Manager PIN. Each change appends a row to
+  `store_feature_changes`, which the report reads (§7.2).
+- **Reading it:** `GET /features` is available to every authenticated staff
+  member and returns `{ key: enabled }`. Clients use it to show or hide
+  extension UI.
+- `internal/platform/features` is part of the Core POS and knows no extension.
+  Keys are plain strings owned by each extension (`inventory.FeatureKey`).
+
 ---
 
 ## 5. Database
 
-One migration: `internal/platform/database/migrations/000018_create_inventory_slice.sql`.
+Two migrations, so the platform switch and the extension's tables stay
+separate.
+
+### 5.1 `000018_create_store_features.sql` (Core POS platform)
+
+```sql
+CREATE TABLE IF NOT EXISTS store_features (
+    key TEXT PRIMARY KEY,
+    enabled BOOLEAN NOT NULL DEFAULT false,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by_staff_identity_id UUID REFERENCES staff_identities(id) ON DELETE RESTRICT,
+    CONSTRAINT store_feature_key_valid CHECK (key ~ '^[a-z][a-z0-9_]{1,39}$')
+);
+
+-- Append-only history of every switch change; the gross-profit report reads it.
+CREATE TABLE IF NOT EXISTS store_feature_changes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key TEXT NOT NULL REFERENCES store_features(key) ON DELETE RESTRICT,
+    enabled BOOLEAN NOT NULL,
+    actor_staff_identity_id UUID NOT NULL REFERENCES staff_identities(id) ON DELETE RESTRICT,
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS store_feature_change_key_time_index
+    ON store_feature_changes (key, changed_at);
+
+INSERT INTO store_features (key, enabled) VALUES ('inventory', false)
+    ON CONFLICT (key) DO NOTHING;
+```
+
+### 5.2 `000019_create_inventory_slice.sql` (extension)
+
 Quantities are `NUMERIC(14,3)` in Stock Units. Costs per Stock Unit are
 `NUMERIC(14,4)`. Line and record costs are `NUMERIC(14,2)`. Display rounds to
 whole VND.
@@ -429,22 +534,26 @@ CREATE INDEX IF NOT EXISTS inventory_consumption_line_consumption_index
 The extension references Core POS tables through foreign keys. No Core POS
 table references the extension.
 
-Queries live in a new `sql/queries/inventory.sql`. `ListConsumptionSources`
-goes in `sql/queries/sales.sql`, because sales and preparation own the tables it
-reads.
+Queries live in new `sql/queries/inventory.sql` and `sql/queries/features.sql`
+files. `ListPreparationUnitSources` goes in `sql/queries/sales.sql`, because
+sales and preparation own the tables it reads.
 
 ---
 
 ## 6. Commands and Reads
 
 All mutations go through `internal/platform/command` (`ExecuteMutation`,
-request-id idempotency, audit) as `catalog` does. Routes are under `/inventory`.
+request-id idempotency, audit) as `catalog` does. Inventory routes are under
+`/inventory`, and every one of them is behind the `FEATURE_DISABLED` middleware
+(§4.6). The `/features` routes (§4.6) are registered by
+`internal/platform/features` and are never gated.
 
 ### 6.1 Capabilities
 
 Added to `RoleCapabilities[RoleManager]` in `internal/auth/domain.go` only:
 
-- `inventory.administer`: every mutation below.
+- `features.administer`: `PUT /features/:key`.
+- `inventory.administer`: every inventory mutation below.
 - `inventory.view_costs`: costing and report reads, and cost fields on
   ingredient reads.
 
@@ -525,6 +634,10 @@ Totals and per-Menu-Item rows (with a per-Size breakdown keyed by the snapshot
 - `waste_cost_vnd`: the cost of wasted units
 - `units`, and `units_cost_none` / `units_cost_partial` for the completeness
   warning
+- `disabled_intervals`: the parts of `[from, to)` during which the `inventory`
+  Store Feature was off, derived from `store_feature_changes`. Units created
+  then have no record and are absent from every figure. The UI shows
+  "Kho tắt từ … đến …, số liệu không đầy đủ".
 
 Rules:
 
@@ -543,8 +656,27 @@ Rules:
 
 ## 8. Web
 
-Two tabs in **Quản lý** (`web/src/routes/_app/manage/`), shown only with the
-capabilities, in a new `web/src/features/inventory/`:
+### 8.1 Store Feature switch
+
+- A `useStoreFeatures()` query (`GET /features`, shared cache) feeds a
+  `useFeatureEnabled("inventory")` helper. Extension UI renders only when it
+  returns true. A `FEATURE_DISABLED` response invalidates the query, so a
+  client that missed a switch-off hides the tabs on its next call.
+- **Cài đặt** (`features/settings/components/settings-view.tsx`) gains a section
+  **"Tính năng cửa hàng"**, rendered only with `features.administer`, with a
+  `Switch` row: **"Quản lý kho & giá vốn"**, hint *"Áp dụng cho toàn cửa hàng.
+  Khi tắt: ngừng ghi tiêu hao, ẩn các màn hình kho; dữ liệu vẫn được giữ."*
+  Turning it off asks for confirmation first.
+- The page subtitle changes from "Các tùy chọn chỉ áp dụng cho máy này." to
+  name both scopes. The existing sections stay per-device (`usePreferencesStore`)
+  and are labelled "Máy này". The new section is labelled "Toàn cửa hàng".
+
+### 8.2 Inventory tabs
+
+Two tabs in **Quản lý** (`web/src/routes/_app/manage/`), shown only when the
+feature is on and the capabilities are held, in a new
+`web/src/features/inventory/`. When the feature is off, the routes redirect to
+`/manage`.
 
 1. **Nguyên liệu** (`manage/ingredients.tsx`)
    - List: name, kind (Thô / Bán thành phẩm), Stock Unit, current cost per
@@ -585,6 +717,11 @@ existing response envelope:
 | `ErrDuplicateRecipeIngredient` | The same Ingredient twice in one Recipe |
 | `ErrItemHasSizes` | An item-level Recipe for a Menu Item that has Sizes |
 | `ErrDuplicateIngredientName` | Active name clash |
+| `ErrFeatureDisabled` (`403`, code `FEATURE_DISABLED`) | Any `/inventory/*` call while the `inventory` Store Feature is off |
+
+`internal/platform/features` adds `ErrUnknownFeature` (`404`) for
+`PUT /features/:key` with a key that has no `store_features` row. Keys are
+created by migrations, not by the API.
 
 The consumption path has no business errors (§4.4).
 
@@ -606,15 +743,33 @@ The consumption path has no business errors (§4.4).
   - Waste leaves the record `ACTIVE`.
   - Remake adds a record for the new unit.
   - A Menu Item with no Recipe still submits and records `NONE`.
-  - With the no-op recorder, the existing sales and preparation suites pass
-    unchanged.
+  - With no bus, the existing sales and preparation suites pass unchanged.
   - A cost change after Submit does not change the stored record.
   - Gross-profit report on a fixed scenario with one Comp + Remake and one
     Cancellation matches hand-computed totals.
   - Capability checks: Cashier and Barista are denied.
+- **Hook bus (`internal/platform/hooks`)**
+  - Subscribers run in order with the publisher's queries.
+  - A subscriber error aborts the publishing transaction.
+  - A nil bus publishes nothing.
+- **Store Feature (integration)**
+  - With `inventory` off (the seeded default), Submit writes no record and
+    `/inventory/*` returns `FEATURE_DISABLED`.
+  - Turn on → Submit records. Turn off → Cancel of that unit still voids its
+    record.
+  - Each change writes `store_feature_changes` and an Audit Event.
+  - `PUT /features/:key` is denied without `features.administer`.
+  - The report returns `disabled_intervals` for a period spanning an off
+    interval.
+- **Decoupling guard**: a test in `internal/platform/hooks` (or a `go vet`-style
+  check in CI) asserts that no package under `internal/sales`,
+  `internal/preparation`, `internal/catalog` or `internal/platform` imports
+  `internal/inventory`.
 - **Web (vitest)**: `compose.ts`, the costing table, the recipe editor's unit
   picker, and the report's completeness warning, following the
-  `availability-*.test.tsx` style.
+  `availability-*.test.tsx` style. Also: the Settings section renders only with
+  `features.administer`, and the inventory tabs are hidden when the feature is
+  off.
 
 ---
 
@@ -639,6 +794,23 @@ The consumption path has no business errors (§4.4).
    infrastructure the single-server deployment does not need.
 6. **No recipe versioning.** The Consumption Record is the history.
 7. **Gross profit excludes Refunds** and is labelled a management figure.
+8. **A generic hook bus instead of a `ConsumptionRecorder` interface in the
+   Core.** An interface named for consumption would put the extension's concept
+   inside `sales` and `preparation`. The bus carries only Core facts, and any
+   extension can subscribe. It is typed per fact rather than `any`-based, to
+   keep compile-time checks.
+9. **A server-side Store Feature, not a device preference.** Recording happens
+   on the server, so a per-device switch would let one terminal record and
+   another not. The switch is generic (`store_features`) so later extensions
+   reuse it.
+10. **Off means stopped, data kept, and voids still applied.** Turning the
+    feature off stops recording, hides the UI and blocks the API, but never
+    deletes data. Voiding existing records on Cancellation continues while off,
+    because skipping it would leave permanently wrong costs. Nothing is
+    backfilled when the feature is turned back on, and the report names the gap
+    instead.
+11. **No fresh Manager PIN to toggle.** The switch has no financial effect on
+    the Core POS. The Manager role plus an Audit Event is enough.
 
 ---
 
@@ -646,12 +818,19 @@ The consumption path has no business errors (§4.4).
 
 One branch, in this order. Each step is independently green.
 
-1. Migration, sqlc queries, units seed, domain and composition with unit tests.
-2. Admin commands and reads, capabilities, swagger.
-3. The recorder and its wiring into Submit, Remake and Cancel, with the
-   `InsertPreparationUnit` change and `ListConsumptionSources`, plus
-   integration tests.
-4. Menu costing and gross-profit report reads.
-5. `CONTEXT.md` Inventory Extension section.
-6. Web: orval regeneration, the Nguyên liệu tab, the Công thức & Giá vốn tab,
-   the report.
+1. Platform: `internal/platform/hooks` and `internal/platform/features`
+   (migration `000018`, `/features` routes, `features.administer`). Publish
+   `PreparationUnitsCreated` / `PreparationUnitsCancelled` from Submit, Remake
+   and Cancel, with the `InsertPreparationUnit` change and
+   `ListPreparationUnitSources`. No subscribers yet, so behaviour is unchanged.
+2. Inventory: migration `000019`, sqlc queries, units seed, domain and
+   composition, with unit tests.
+3. Inventory admin commands and reads, capabilities, `FEATURE_DISABLED`
+   middleware, swagger.
+4. Inventory subscribers and their `main.go` registration, with integration
+   tests, including the Store Feature cases.
+5. Menu costing and gross-profit report reads, including `disabled_intervals`.
+6. `CONTEXT.md`: **Store Feature** in Language, plus the Inventory Extension
+   section.
+7. Web: orval regeneration, the Settings "Tính năng cửa hàng" section, feature
+   gating, the Nguyên liệu tab, the Công thức & Giá vốn tab, the report.
