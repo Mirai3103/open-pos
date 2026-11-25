@@ -581,6 +581,21 @@ type StaffOperationalRole struct {
 	Role            string    `json:"role"`
 }
 
+type StoreFeature struct {
+	Key                      string        `json:"key"`
+	Enabled                  bool          `json:"enabled"`
+	UpdatedAt                time.Time     `json:"updated_at"`
+	UpdatedByStaffIdentityID uuid.NullUUID `json:"updated_by_staff_identity_id"`
+}
+
+type StoreFeatureChange struct {
+	ID                   uuid.UUID `json:"id"`
+	Key                  string    `json:"key"`
+	Enabled              bool      `json:"enabled"`
+	ActorStaffIdentityID uuid.UUID `json:"actor_staff_identity_id"`
+	ChangedAt            time.Time `json:"changed_at"`
+}
+
 type Table struct {
 	ID             uuid.UUID `json:"id"`
 	Name           string    `json:"name"`

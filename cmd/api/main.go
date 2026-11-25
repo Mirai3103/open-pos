@@ -18,6 +18,7 @@ import (
 	"github.com/Mirai3103/open-pos/internal/platform/config"
 	"github.com/Mirai3103/open-pos/internal/platform/database"
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/features"
 	"github.com/Mirai3103/open-pos/internal/preparation"
 	"github.com/Mirai3103/open-pos/internal/sales"
 	"github.com/Mirai3103/open-pos/internal/shift"
@@ -183,6 +184,9 @@ func run(ctx context.Context) error {
 
 	preparationSlices := preparation.NewSlices(db, queries)
 	preparationSlices.RegisterRoutes(v1, authSlices.Middleware)
+
+	featuresSlices := features.NewSlices(db, queries)
+	featuresSlices.RegisterRoutes(v1, authSlices.Middleware)
 
 	// 6. Register Embedded Web SPA & Static Assets
 	if err := web.RegisterHandlers(e); err != nil {

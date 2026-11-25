@@ -246,6 +246,7 @@ type Querier interface {
 	GetStaffRoles(ctx context.Context, staffIdentityID uuid.UUID) ([]string, error)
 	GetStaffRolesForUpdate(ctx context.Context, staffIdentityID uuid.UUID) ([]string, error)
 	GetStaffSummary(ctx context.Context, id uuid.UUID) (GetStaffSummaryRow, error)
+	GetStoreFeatureEnabled(ctx context.Context, key string) (bool, error)
 	GetTableForUpdate(ctx context.Context, id uuid.UUID) (Table, error)
 	InsertAbandonedCheckout(ctx context.Context, arg InsertAbandonedCheckoutParams) (uuid.UUID, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) (AuditEvent, error)
@@ -334,6 +335,7 @@ type Querier interface {
 	// omitted: reconciliation may only start when every global blocker is clear,
 	// so they are born at their CHECK-enforced zero.
 	InsertShiftReconciliation(ctx context.Context, arg InsertShiftReconciliationParams) (InsertShiftReconciliationRow, error)
+	InsertStoreFeatureChange(ctx context.Context, arg InsertStoreFeatureChangeParams) error
 	// Batches assignTables' per-Table insert loop into one round trip. Two
 	// single-array unnests joined by WITH ORDINALITY zip table_ids and sequences
 	// into rows in lockstep, so row i of the result is table_ids[i] assigned at
@@ -530,6 +532,8 @@ type Querier interface {
 	ListShiftClosureDiscrepancies(ctx context.Context, shiftClosureID uuid.UUID) ([]ShiftDiscrepancy, error)
 	// One reconciliation's append-only QR Observations, oldest first.
 	ListShiftQRObservations(ctx context.Context, reconciliationID uuid.UUID) ([]ListShiftQRObservationsRow, error)
+	ListStoreFeatureChanges(ctx context.Context, arg ListStoreFeatureChangesParams) ([]ListStoreFeatureChangesRow, error)
+	ListStoreFeatures(ctx context.Context) ([]ListStoreFeaturesRow, error)
 	// The `submitted` flag on a Charge Allocation is derived, not stored: there is
 	// no submitted column anywhere in the schema, and therefore no flag that can
 	// fall out of step with the Order that defines it.
@@ -715,6 +719,7 @@ type Querier interface {
 	// Submit, this runs Session-then-Checks against Payment's Check-then-Session,
 	// so it inherits ADR-031's AB-BA window (ADR-066).
 	LockSessionChecksForRecovery(ctx context.Context, serviceSessionID uuid.UUID) ([]LockSessionChecksForRecoveryRow, error)
+	LockStoreFeature(ctx context.Context, key string) (LockStoreFeatureRow, error)
 	// The committed-but-unsubmitted Order Draft of the Session the caller has
 	// already locked with LockServiceSessionForSubmission. Only the draft is
 	// locked here: the Session lock is its own query so a missing or closed
@@ -825,6 +830,7 @@ type Querier interface {
 	SetPreparationUnitCorrectedState(ctx context.Context, arg SetPreparationUnitCorrectedStateParams) error
 	SetPreparationUnitState(ctx context.Context, arg SetPreparationUnitStateParams) error
 	SetStaffEnabled(ctx context.Context, arg SetStaffEnabledParams) (SetStaffEnabledRow, error)
+	SetStoreFeatureEnabled(ctx context.Context, arg SetStoreFeatureEnabledParams) error
 	SetTableAvailability(ctx context.Context, arg SetTableAvailabilityParams) (Table, error)
 	// The settlement consequence of a Cancellation or Comp that reduces a live
 	// Check to zero balance. All four evidence columns are written together
