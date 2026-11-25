@@ -48,8 +48,20 @@ func TestSubmitPublishesPreparationUnitsCreated(t *testing.T) {
 	ev := rec.created[0]
 	assert.Equal(t, hooks.OriginSubmit, ev.Origin)
 	require.Len(t, ev.Units, 2)
+	// Compare IDs as a set, not positionally — the response and event may
+	// order differently because they share queued_at and UUID order is
+	// non-deterministic.
+	expectedIDs := make([]uuid.UUID, len(units))
+	for i, u := range units {
+		expectedIDs[i] = u.ID
+	}
+	actualIDs := make([]uuid.UUID, len(ev.Units))
 	for i, u := range ev.Units {
-		assert.Equal(t, units[i].ID, u.PreparationUnitID)
+		actualIDs[i] = u.PreparationUnitID
+	}
+	assert.ElementsMatch(t, expectedIDs, actualIDs)
+	// Per-unit catalog identity — identical for all units in this Submit.
+	for _, u := range ev.Units {
 		assert.Equal(t, env.CoffeeID, u.MenuItemID)
 		assert.Nil(t, u.SizeID)
 		assert.Empty(t, u.ModifierOptionIDs)
