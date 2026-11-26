@@ -145,8 +145,9 @@ func (c *Commands) SetIngredientUnits(ctx context.Context, actor Actor, cmd SetI
 			return 0, IngredientResponse{}, err
 		}
 		u.StockQuantity = Round3(u.StockQuantity)
-		if u.StockQuantity <= 0 {
-			return 0, IngredientResponse{}, fmt.Errorf("%w: unit %q must hold a positive quantity", ErrInvalidQuantity, u.Name)
+		if u.StockQuantity <= 0 || u.StockQuantity > MaxUnitStockQuantity {
+			return 0, IngredientResponse{}, fmt.Errorf("%w: unit %q must hold more than 0 and at most %v",
+				ErrInvalidQuantity, u.Name, MaxUnitStockQuantity)
 		}
 		inputs[i] = u
 	}
@@ -271,8 +272,8 @@ func (c *Commands) RecordCost(ctx context.Context, actor Actor, cmd RecordCostCo
 		return 0, CostEntryResponse{}, ErrInvalidAmount
 	}
 	qty := Round3(cmd.Quantity)
-	if qty <= 0 {
-		return 0, CostEntryResponse{}, fmt.Errorf("%w: must be positive", ErrInvalidQuantity)
+	if qty <= 0 || qty > MaxStockQuantity {
+		return 0, CostEntryResponse{}, fmt.Errorf("%w: must be more than 0 and at most %v", ErrInvalidQuantity, MaxStockQuantity)
 	}
 	if err := cmd.Unit.Validate(); err != nil {
 		return 0, CostEntryResponse{}, err
@@ -299,7 +300,16 @@ func (c *Commands) RecordCost(ctx context.Context, actor Actor, cmd RecordCostCo
 			if err != nil {
 				return fail(err)
 			}
-			perStock := Round4(float64(cmd.AmountVND) / Round3(qty*factor))
+			stockQty := Round3(qty * factor)
+			if stockQty <= 0 || stockQty > MaxStockQuantity {
+				return fail(fmt.Errorf("%w: %v of that unit is not between 0.001 and %v Stock Units",
+					ErrInvalidQuantity, qty, MaxStockQuantity))
+			}
+			perStock := Round4(float64(cmd.AmountVND) / stockQty)
+			if perStock <= 0 || perStock > MaxCostPerStockUnit {
+				return fail(fmt.Errorf("%w: cost per Stock Unit %v is outside 0.0001 to %v",
+					ErrInvalidAmount, perStock, MaxCostPerStockUnit))
+			}
 			row, err := q.InventoryInsertIngredientCost(ctx, sqlc.InventoryInsertIngredientCostParams{
 				IngredientID: ing.ID, AmountVnd: cmd.AmountVND, Quantity: qty,
 				UnitCode: nullString(cmd.Unit.UnitCode), IngredientUnitID: nullUUID(cmd.Unit.IngredientUnitID),

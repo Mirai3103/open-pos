@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
@@ -41,9 +42,33 @@ func prevalidateLines(ownerKind string, lines []RecipeLineInput) ([]RecipeLineIn
 	return out, nil
 }
 
+// storedIngredientIDs returns the Ingredients already on the owner's stored
+// Recipe, so a replace may keep a line whose Ingredient has since been retired.
+func storedIngredientIDs(ctx context.Context, q *sqlc.Queries, ownerKind string, ownerID uuid.UUID) (map[uuid.UUID]bool, error) {
+	out := map[uuid.UUID]bool{}
+	recipe, err := q.InventoryGetRecipe(ctx, sqlc.InventoryGetRecipeParams{OwnerKind: ownerKind, OwnerID: ownerID})
+	if errors.Is(err, sql.ErrNoRows) {
+		return out, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get recipe: %w", err)
+	}
+	rows, err := q.InventoryListRecipeLines(ctx, recipe.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list recipe lines: %w", err)
+	}
+	for _, r := range rows {
+		out[r.IngredientID] = true
+	}
+	return out, nil
+}
+
 // resolveLines checks each line's Ingredient and unit inside the transaction.
-// rawOnly enforces the one-level Batch Recipe rule.
-func resolveLines(ctx context.Context, q *sqlc.Queries, lines []RecipeLineInput, rawOnly bool) ([]resolvedLine, error) {
+// rawOnly enforces the one-level Batch Recipe rule. A retired Ingredient is
+// accepted only when it is in stored (spec §3.4: existing lines stay valid).
+func resolveLines(ctx context.Context, q *sqlc.Queries, lines []RecipeLineInput, rawOnly bool,
+	stored map[uuid.UUID]bool,
+) ([]resolvedLine, error) {
 	out := make([]resolvedLine, 0, len(lines))
 	for _, l := range lines {
 		ing, err := q.InventoryGetIngredient(ctx, l.IngredientID)
@@ -53,14 +78,18 @@ func resolveLines(ctx context.Context, q *sqlc.Queries, lines []RecipeLineInput,
 		if err != nil {
 			return nil, fmt.Errorf("get ingredient: %w", err)
 		}
-		if ing.RetiredAt.Valid {
+		if ing.RetiredAt.Valid && !stored[ing.ID] {
 			return nil, fmt.Errorf("%w: %s", ErrIngredientRetired, ing.Name)
 		}
 		if rawOnly && ing.Kind != KindRaw {
 			return nil, fmt.Errorf("%w: %s", ErrBatchRecipeNotRaw, ing.Name)
 		}
-		if _, err := resolveFactor(ctx, q, ing, l.Unit); err != nil {
+		factor, err := resolveFactor(ctx, q, ing, l.Unit)
+		if err != nil {
 			return nil, err
+		}
+		if math.Abs(l.Quantity)*factor > MaxStockQuantity {
+			return nil, fmt.Errorf("%w: %s exceeds %v %s", ErrInvalidQuantity, ing.Name, MaxStockQuantity, ing.StockUnitCode)
 		}
 		out = append(out, resolvedLine{ingredientID: ing.ID, quantity: l.Quantity, unit: l.Unit})
 	}
@@ -124,9 +153,10 @@ func writeRecipe(ctx context.Context, q *sqlc.Queries, ownerKind string, ownerID
 	return nil
 }
 
-// verifyOwner checks the sale Recipe owner exists, is not retired, and (for
-// a Menu Item) has no Sizes.
-func verifyOwner(ctx context.Context, q *sqlc.Queries, kind string, id uuid.UUID) error {
+// verifyOwner checks the sale Recipe owner exists, is not retired, and (for a
+// Menu Item with lines to store) has no Sizes. An empty replace deletes the
+// Recipe, which must stay possible once the item gains Sizes.
+func verifyOwner(ctx context.Context, q *sqlc.Queries, kind string, id uuid.UUID, hasLines bool) error {
 	notFound := fmt.Errorf("%w: %s %s", ErrRecipeOwnerNotFound, kind, id)
 	switch kind {
 	case OwnerMenuItem:
@@ -137,7 +167,7 @@ func verifyOwner(ctx context.Context, q *sqlc.Queries, kind string, id uuid.UUID
 		if err != nil {
 			return fmt.Errorf("get menu item: %w", err)
 		}
-		if row.HasSizes {
+		if row.HasSizes && hasLines {
 			return ErrItemHasSizes
 		}
 	case OwnerSize:
@@ -175,10 +205,14 @@ func (c *Commands) SetRecipe(ctx context.Context, actor Actor, cmd SetRecipeComm
 			fail := func(err error) (int, RecipeResponse, AuditRecord, error) {
 				return 0, RecipeResponse{}, AuditRecord{}, err
 			}
-			if err := verifyOwner(ctx, q, cmd.OwnerKind, cmd.OwnerID); err != nil {
+			if err := verifyOwner(ctx, q, cmd.OwnerKind, cmd.OwnerID, len(lines) > 0); err != nil {
 				return fail(err)
 			}
-			resolved, err := resolveLines(ctx, q, lines, false)
+			stored, err := storedIngredientIDs(ctx, q, cmd.OwnerKind, cmd.OwnerID)
+			if err != nil {
+				return fail(err)
+			}
+			resolved, err := resolveLines(ctx, q, lines, false, stored)
 			if err != nil {
 				return fail(err)
 			}
@@ -201,7 +235,7 @@ func (c *Commands) SetBatchRecipe(ctx context.Context, actor Actor, cmd SetBatch
 		return 0, RecipeResponse{}, err
 	}
 	yield := Round3(cmd.YieldQuantity)
-	if len(lines) > 0 && yield <= 0 {
+	if len(lines) > 0 && (yield <= 0 || yield > MaxStockQuantity) {
 		return 0, RecipeResponse{}, ErrInvalidYield
 	}
 	fp := map[string]any{"ingredient_id": cmd.IngredientID, "yield": yield, "lines": lines}
@@ -221,7 +255,11 @@ func (c *Commands) SetBatchRecipe(ctx context.Context, actor Actor, cmd SetBatch
 			if ing.Kind != KindPrepared {
 				return fail(ErrBatchRecipeOnRaw)
 			}
-			resolved, err := resolveLines(ctx, q, lines, true)
+			stored, err := storedIngredientIDs(ctx, q, OwnerIngredient, ing.ID)
+			if err != nil {
+				return fail(err)
+			}
+			resolved, err := resolveLines(ctx, q, lines, true, stored)
 			if err != nil {
 				return fail(err)
 			}

@@ -70,7 +70,11 @@ func (b *Book) UnitCost(id uuid.UUID) (float64, bool) {
 		}
 		total += l.StockQty * c
 	}
-	return Round4(total / batch.Yield), true
+	perUnit := Round4(total / batch.Yield)
+	if perUnit > MaxCostPerStockUnit {
+		return 0, false // out of range: treat as uncosted rather than overflow a column
+	}
+	return perUnit, true
 }
 
 // Selection is what one Preparation Unit was sold as.
@@ -137,17 +141,27 @@ func (b *Book) Compose(sel Selection) Composition {
 		if qty <= 0 {
 			continue
 		}
+		// Recording a sale must never fail on out-of-range recipe data
+		// (spec §4.4): clamp to what the columns hold and flag the record.
+		clamped := qty > MaxStockQuantity
+		if clamped {
+			qty = MaxStockQuantity
+		}
 		ing, ok := b.Ingredients[id]
 		if !ok {
 			continue
 		}
 		line := ComposedLine{IngredientID: id, Name: ing.Name, Kind: ing.Kind, StockUnit: ing.StockUnit, StockQty: qty}
-		if c, ok := b.UnitCost(id); ok {
-			unit := c
-			lineCost := Round2(qty * c)
-			line.UnitCost, line.LineCost = &unit, &lineCost
-			total += lineCost
-		} else {
+		costed := false
+		if c, ok := b.UnitCost(id); ok && !clamped {
+			if lineCost := Round2(qty * c); lineCost <= MaxLineCostVND {
+				unit := c
+				line.UnitCost, line.LineCost = &unit, &lineCost
+				total += lineCost
+				costed = true
+			}
+		}
+		if !costed {
 			out.Status = CostPartial
 		}
 		out.Lines = append(out.Lines, line)

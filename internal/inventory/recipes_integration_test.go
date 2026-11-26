@@ -90,3 +90,113 @@ func TestEmptyLinesDeleteRecipe(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, inventory.CostNone, book.Compose(inventory.Selection{MenuItemID: m.CoffeeID}).Status)
 }
+
+func TestRecipeWithRetiredIngredientStaysEditable(t *testing.T) {
+	c := newCommands()
+	ctx := context.Background()
+	manager := seedActor(t, auth.RoleManager)
+	m := seedMenu(t)
+	f := seedIngredients(t, c, manager)
+	setRecipe(t, c, manager, inventory.OwnerMenuItem, m.CoffeeID, line(f.Base.ID, 40, "ml"), line(f.Condensed.ID, 30, "g"))
+
+	_, _, err := c.RetireIngredient(ctx, manager, inventory.RetireIngredientCommand{RequestID: uuid.New(), IngredientID: f.Condensed.ID})
+	require.NoError(t, err)
+
+	// Resending the whole recipe with only the base quantity changed keeps the retired line.
+	setRecipe(t, c, manager, inventory.OwnerMenuItem, m.CoffeeID, line(f.Base.ID, 45, "ml"), line(f.Condensed.ID, 30, "g"))
+	book, err := inventory.LoadBook(ctx, queries())
+	require.NoError(t, err)
+	assert.Len(t, book.Items[m.CoffeeID], 2)
+
+	// A retired Ingredient that is not already in the recipe still cannot be added.
+	_, _, err = c.SetRecipe(ctx, manager, inventory.SetRecipeCommand{
+		RequestID: uuid.New(), OwnerKind: inventory.OwnerSize, OwnerID: m.SizeM,
+		Lines: []inventory.RecipeLineInput{line(f.Condensed.ID, 5, "g")},
+	})
+	require.ErrorIs(t, err, inventory.ErrIngredientRetired)
+}
+
+func TestBatchRecipeWithRetiredIngredientStaysEditable(t *testing.T) {
+	c := newCommands()
+	ctx := context.Background()
+	manager := seedActor(t, auth.RoleManager)
+	f := seedIngredients(t, c, manager)
+	setBatch := func(yield float64) error {
+		_, _, err := c.SetBatchRecipe(ctx, manager, inventory.SetBatchRecipeCommand{
+			RequestID: uuid.New(), IngredientID: f.Base.ID, YieldQuantity: yield,
+			Lines: []inventory.RecipeLineInput{line(f.Powder.ID, 100, "g")},
+		})
+		return err
+	}
+	require.NoError(t, setBatch(500))
+
+	_, _, err := c.RetireIngredient(ctx, manager, inventory.RetireIngredientCommand{RequestID: uuid.New(), IngredientID: f.Powder.ID})
+	require.NoError(t, err)
+
+	require.NoError(t, setBatch(600), "a yield-only change keeps the retired line")
+}
+
+func TestItemRecipeCanBeDeletedAfterItemGainsSizes(t *testing.T) {
+	c := newCommands()
+	ctx := context.Background()
+	manager := seedActor(t, auth.RoleManager)
+	m := seedMenu(t)
+	f := seedIngredients(t, c, manager)
+	setRecipe(t, c, manager, inventory.OwnerMenuItem, m.CoffeeID, line(f.Base.ID, 40, "ml"))
+
+	_, err := invTestDB.Exec(`INSERT INTO menu_item_sizes (menu_item_id, name, normalized_name, price_vnd) VALUES ($1, 'Size M', 'size m', 30000)`, m.CoffeeID)
+	require.NoError(t, err)
+
+	_, _, err = c.SetRecipe(ctx, manager, inventory.SetRecipeCommand{
+		RequestID: uuid.New(), OwnerKind: inventory.OwnerMenuItem, OwnerID: m.CoffeeID,
+		Lines: []inventory.RecipeLineInput{line(f.Base.ID, 41, "ml")},
+	})
+	require.ErrorIs(t, err, inventory.ErrItemHasSizes, "writing an item recipe is still refused")
+
+	_, res, err := c.SetRecipe(ctx, manager, inventory.SetRecipeCommand{
+		RequestID: uuid.New(), OwnerKind: inventory.OwnerMenuItem, OwnerID: m.CoffeeID,
+	})
+	require.NoError(t, err, "deleting the now-ignored item recipe must work")
+	assert.Empty(t, res.Lines)
+	book, err := inventory.LoadBook(ctx, queries())
+	require.NoError(t, err)
+	assert.Empty(t, book.Items[m.CoffeeID])
+}
+
+func TestOutOfRangeInputsAreRejected(t *testing.T) {
+	c := newCommands()
+	ctx := context.Background()
+	manager := seedActor(t, auth.RoleManager)
+	m := seedMenu(t)
+	f := seedIngredients(t, c, manager)
+
+	_, _, err := c.SetRecipe(ctx, manager, inventory.SetRecipeCommand{
+		RequestID: uuid.New(), OwnerKind: inventory.OwnerSize, OwnerID: m.SizeM,
+		Lines: []inventory.RecipeLineInput{line(f.Powder.ID, inventory.MaxLineQuantity+1, "g")},
+	})
+	require.ErrorIs(t, err, inventory.ErrInvalidQuantity)
+
+	// 100,000 of a 1,000,000-gram unit is 1e11 g: past what a consumption line stores.
+	_, ing, err := c.SetIngredientUnits(ctx, manager, inventory.SetIngredientUnitsCommand{
+		RequestID: uuid.New(), IngredientID: f.Powder.ID,
+		Units: []inventory.IngredientUnitInput{{Name: "Pallet", StockQuantity: inventory.MaxUnitStockQuantity}},
+	})
+	require.NoError(t, err)
+	_, _, err = c.SetRecipe(ctx, manager, inventory.SetRecipeCommand{
+		RequestID: uuid.New(), OwnerKind: inventory.OwnerSize, OwnerID: m.SizeM,
+		Lines: []inventory.RecipeLineInput{{IngredientID: f.Powder.ID, Quantity: inventory.MaxLineQuantity,
+			Unit: inventory.UnitRef{IngredientUnitID: &ing.Units[0].ID}}},
+	})
+	require.ErrorIs(t, err, inventory.ErrInvalidQuantity)
+
+	_, _, err = c.SetIngredientUnits(ctx, manager, inventory.SetIngredientUnitsCommand{
+		RequestID: uuid.New(), IngredientID: f.Powder.ID,
+		Units: []inventory.IngredientUnitInput{{Name: "Silo", StockQuantity: inventory.MaxUnitStockQuantity + 1}},
+	})
+	require.ErrorIs(t, err, inventory.ErrInvalidQuantity)
+
+	_, _, err = c.RecordCost(ctx, manager, inventory.RecordCostCommand{
+		RequestID: uuid.New(), IngredientID: f.Powder.ID, AmountVND: 1, Quantity: inventory.MaxStockQuantity, Unit: code("g"),
+	})
+	require.ErrorIs(t, err, inventory.ErrInvalidAmount, "a cost that rounds to zero per Stock Unit is refused")
+}

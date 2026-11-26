@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode/utf8"
 )
@@ -64,6 +65,15 @@ const (
 	MaxIngredientNameLength = 120
 	MaxUnitNameLength       = 40
 	MaxRecipeLines          = 50
+
+	// Numeric bounds. They keep every value Inventory computes inside the
+	// NUMERIC(14,x) columns it is stored in, so recording a sale can not
+	// overflow (spec §4.4).
+	MaxLineQuantity      = 100_000.0       // entered recipe line quantity, either sign
+	MaxUnitStockQuantity = 1_000_000.0     // Stock Units in one Ingredient Unit
+	MaxStockQuantity     = 10_000_000_000. // any quantity normalized to Stock Units
+	MaxCostPerStockUnit  = 100_000_000.0   // VND per Stock Unit
+	MaxLineCostVND       = 1_000_000_000.0 // VND of one consumption line
 )
 
 // OwnerKindFromPath maps a recipe route segment to an owner kind.
@@ -95,6 +105,9 @@ func ValidateName(name string, maxLen int) error {
 // kind, after rounding to the stored 3 decimals.
 func ValidateLineQuantity(ownerKind string, q float64) error {
 	r := Round3(q)
+	if math.IsNaN(r) || math.Abs(r) > MaxLineQuantity {
+		return fmt.Errorf("%w: at most %v", ErrInvalidQuantity, MaxLineQuantity)
+	}
 	if ownerKind == OwnerModifierOption {
 		if r == 0 {
 			return fmt.Errorf("%w: an option line must not be zero", ErrInvalidQuantity)

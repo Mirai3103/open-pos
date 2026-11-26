@@ -47,3 +47,10 @@ func TestRounding(t *testing.T) {
 	assert.Equal(t, 65.7895, inventory.Round4(25000.0/380))
 	assert.Equal(t, 1973.69, inventory.Round2(30*65.7895))
 }
+
+func TestValidateLineQuantityBounds(t *testing.T) {
+	require.NoError(t, inventory.ValidateLineQuantity(inventory.OwnerSize, inventory.MaxLineQuantity))
+	require.ErrorIs(t, inventory.ValidateLineQuantity(inventory.OwnerSize, inventory.MaxLineQuantity+1), inventory.ErrInvalidQuantity)
+	require.NoError(t, inventory.ValidateLineQuantity(inventory.OwnerModifierOption, -inventory.MaxLineQuantity))
+	require.ErrorIs(t, inventory.ValidateLineQuantity(inventory.OwnerModifierOption, -inventory.MaxLineQuantity-1), inventory.ErrInvalidQuantity)
+}

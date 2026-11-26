@@ -122,3 +122,48 @@ func TestOptionDelta(t *testing.T) {
 	none := f.book.OptionDelta(uuid.New())
 	assert.False(t, none.HasRecipe)
 }
+
+func TestComposeNeverOverflowsStoredColumns(t *testing.T) {
+	b := inventory.NewBook()
+	flour, item := uuid.New(), uuid.New()
+	b.Ingredients[flour] = inventory.Ingredient{ID: flour, Name: "Bột", Kind: inventory.KindRaw, StockUnit: "g"}
+	b.RawCosts[flour] = 50_000_000
+
+	t.Run("quantity past the column is clamped and flagged PARTIAL", func(t *testing.T) {
+		b.Items[item] = []inventory.Line{{IngredientID: flour, StockQty: 1e12}}
+		got := b.Compose(inventory.Selection{MenuItemID: item})
+		require.Len(t, got.Lines, 1)
+		assert.Equal(t, inventory.MaxStockQuantity, got.Lines[0].StockQty)
+		assert.Nil(t, got.Lines[0].LineCost)
+		assert.Equal(t, inventory.CostPartial, got.Status)
+		assert.Zero(t, got.TotalVND)
+	})
+
+	t.Run("line cost past the column is left uncosted", func(t *testing.T) {
+		b.Items[item] = []inventory.Line{{IngredientID: flour, StockQty: 1000}} // 5e10 VND
+		got := b.Compose(inventory.Selection{MenuItemID: item})
+		require.Len(t, got.Lines, 1)
+		assert.Nil(t, got.Lines[0].LineCost)
+		assert.Equal(t, inventory.CostPartial, got.Status)
+		assert.LessOrEqual(t, got.TotalVND, inventory.MaxLineCostVND)
+	})
+
+	t.Run("in-range recipe is unchanged", func(t *testing.T) {
+		b.Items[item] = []inventory.Line{{IngredientID: flour, StockQty: 10}}
+		got := b.Compose(inventory.Selection{MenuItemID: item})
+		assert.Equal(t, inventory.CostComplete, got.Status)
+		assert.Equal(t, 500_000_000.0, got.TotalVND)
+	})
+}
+
+func TestUnitCostOfOutOfRangeBatchIsUnknown(t *testing.T) {
+	b := inventory.NewBook()
+	raw, prepared := uuid.New(), uuid.New()
+	b.Ingredients[raw] = inventory.Ingredient{ID: raw, Kind: inventory.KindRaw, StockUnit: "g"}
+	b.Ingredients[prepared] = inventory.Ingredient{ID: prepared, Kind: inventory.KindPrepared, StockUnit: "ml"}
+	b.RawCosts[raw] = 1_000_000
+	b.Batches[prepared] = inventory.Batch{Lines: []inventory.Line{{IngredientID: raw, StockQty: 100_000}}, Yield: 0.001}
+
+	_, ok := b.UnitCost(prepared)
+	assert.False(t, ok)
+}
