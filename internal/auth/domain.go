@@ -56,6 +56,9 @@ var RoleCapabilities = map[string][]string{
 		"staff.administer",
 		"audit.inspect",
 		"tables.administer",
+		"features.administer",
+		"inventory.administer",
+		"inventory.view_costs",
 	},
 	RoleCashier: {
 		"catalog.view_prices",

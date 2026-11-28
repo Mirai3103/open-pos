@@ -246,6 +246,7 @@ type Querier interface {
 	GetStaffRoles(ctx context.Context, staffIdentityID uuid.UUID) ([]string, error)
 	GetStaffRolesForUpdate(ctx context.Context, staffIdentityID uuid.UUID) ([]string, error)
 	GetStaffSummary(ctx context.Context, id uuid.UUID) (GetStaffSummaryRow, error)
+	GetStoreFeatureEnabled(ctx context.Context, key string) (bool, error)
 	GetTableForUpdate(ctx context.Context, id uuid.UUID) (Table, error)
 	InsertAbandonedCheckout(ctx context.Context, arg InsertAbandonedCheckoutParams) (uuid.UUID, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) (AuditEvent, error)
@@ -299,7 +300,7 @@ type Querier interface {
 	// priority, and linked back to its source. Adds no Order Item or charge.
 	InsertPreparationRemakeUnit(ctx context.Context, arg InsertPreparationRemakeUnitParams) (PreparationUnit, error)
 	InsertPreparationStateCorrection(ctx context.Context, arg InsertPreparationStateCorrectionParams) (PreparationStateCorrection, error)
-	InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) error
+	InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) (uuid.UUID, error)
 	InsertPreparationUnitTransition(ctx context.Context, arg InsertPreparationUnitTransitionParams) error
 	InsertPreparationWaste(ctx context.Context, arg InsertPreparationWasteParams) (PreparationWaste, error)
 	InsertRefund(ctx context.Context, arg InsertRefundParams) (Refund, error)
@@ -334,12 +335,52 @@ type Querier interface {
 	// omitted: reconciliation may only start when every global blocker is clear,
 	// so they are born at their CHECK-enforced zero.
 	InsertShiftReconciliation(ctx context.Context, arg InsertShiftReconciliationParams) (InsertShiftReconciliationRow, error)
+	InsertStoreFeatureChange(ctx context.Context, arg InsertStoreFeatureChangeParams) error
 	// Batches assignTables' per-Table insert loop into one round trip. Two
 	// single-array unnests joined by WITH ORDINALITY zip table_ids and sequences
 	// into rows in lockstep, so row i of the result is table_ids[i] assigned at
 	// sequences[i]; the caller relies on getting exactly len(table_ids) rows back
 	// in that order.
 	InsertTableAssignmentsBatch(ctx context.Context, arg InsertTableAssignmentsBatchParams) ([]InsertTableAssignmentsBatchRow, error)
+	// Inventory Extension queries. Every name starts with Inventory.
+	InventoryCreateIngredient(ctx context.Context, arg InventoryCreateIngredientParams) (InventoryIngredient, error)
+	InventoryDeleteIngredientUnit(ctx context.Context, arg InventoryDeleteIngredientUnitParams) error
+	InventoryDeleteRecipe(ctx context.Context, id uuid.UUID) error
+	InventoryDeleteRecipeLines(ctx context.Context, recipeID uuid.UUID) error
+	InventoryFindRecipe(ctx context.Context, arg InventoryFindRecipeParams) (uuid.UUID, error)
+	InventoryGetIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryGetIngredientUnit(ctx context.Context, arg InventoryGetIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryGetMenuItemForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetMenuItemForRecipeRow, error)
+	InventoryGetOptionForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetOptionForRecipeRow, error)
+	InventoryGetRecipe(ctx context.Context, arg InventoryGetRecipeParams) (InventoryGetRecipeRow, error)
+	InventoryGetSizeForRecipe(ctx context.Context, id uuid.UUID) (InventoryGetSizeForRecipeRow, error)
+	InventoryIngredientUnitInUse(ctx context.Context, id uuid.UUID) (bool, error)
+	InventoryInsertConsumption(ctx context.Context, arg InventoryInsertConsumptionParams) (uuid.UUID, error)
+	InventoryInsertConsumptionLine(ctx context.Context, arg InventoryInsertConsumptionLineParams) error
+	InventoryInsertIngredientCost(ctx context.Context, arg InventoryInsertIngredientCostParams) (InventoryIngredientCost, error)
+	InventoryInsertIngredientUnit(ctx context.Context, arg InventoryInsertIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryInsertRecipe(ctx context.Context, arg InventoryInsertRecipeParams) (uuid.UUID, error)
+	InventoryInsertRecipeLine(ctx context.Context, arg InventoryInsertRecipeLineParams) error
+	// Every recipe line with what it needs to be normalized to Stock Units in Go:
+	// a system unit's factor or an Ingredient Unit's stock quantity.
+	InventoryListBookLines(ctx context.Context) ([]InventoryListBookLinesRow, error)
+	InventoryListCurrentCosts(ctx context.Context) ([]InventoryListCurrentCostsRow, error)
+	// Read-only join into Core tables (spec §7.2 read-model exception).
+	InventoryListGrossProfitUnits(ctx context.Context, arg InventoryListGrossProfitUnitsParams) ([]InventoryListGrossProfitUnitsRow, error)
+	InventoryListIngredientCosts(ctx context.Context, ingredientID uuid.UUID) ([]InventoryIngredientCost, error)
+	InventoryListIngredientUnits(ctx context.Context, ingredientIds []uuid.UUID) ([]InventoryIngredientUnit, error)
+	InventoryListIngredients(ctx context.Context) ([]InventoryIngredient, error)
+	// Read-only join into catalog tables (spec §7.1 read-model exception).
+	InventoryListMenuForCosting(ctx context.Context) ([]InventoryListMenuForCostingRow, error)
+	InventoryListOptionsForCosting(ctx context.Context) ([]InventoryListOptionsForCostingRow, error)
+	InventoryListRecipeLines(ctx context.Context, recipeID uuid.UUID) ([]InventoryListRecipeLinesRow, error)
+	InventoryListUnitComps(ctx context.Context, preparationUnitIds []uuid.UUID) ([]InventoryListUnitCompsRow, error)
+	InventoryLockIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryRenameIngredient(ctx context.Context, arg InventoryRenameIngredientParams) (InventoryIngredient, error)
+	InventoryRetireIngredient(ctx context.Context, id uuid.UUID) (InventoryIngredient, error)
+	InventoryUpdateIngredientUnit(ctx context.Context, arg InventoryUpdateIngredientUnitParams) (InventoryIngredientUnit, error)
+	InventoryUpdateRecipeYield(ctx context.Context, arg InventoryUpdateRecipeYieldParams) error
+	InventoryVoidConsumptions(ctx context.Context, arg InventoryVoidConsumptionsParams) error
 	ListActiveIdentities(ctx context.Context) ([]ListActiveIdentitiesRow, error)
 	// The queue's active alerts, oldest first. The Waste join matches only
 	// WASTE alerts, so waste_id resolves through the Waste fact for WASTE and
@@ -487,6 +528,11 @@ type Querier interface {
 	// snapshot rule (a post-sale allocation belongs to history, not the live
 	// capacity) through refund_completed_sale_id.
 	ListPaymentRefundAllocations(ctx context.Context, paymentIds []uuid.UUID) ([]ListPaymentRefundAllocationsRow, error)
+	// The catalog identities each Order Item was sold as, one row per selected
+	// Modifier Option (one row with a NULL option when none), for Core hook
+	// payloads. committed_items deliberately has no size_id; the source draft
+	// item still holds it.
+	ListPreparationUnitSources(ctx context.Context, orderItemIds []uuid.UUID) ([]ListPreparationUnitSourcesRow, error)
 	// Batched projection read for a set of ids already known to exist (e.g. a
 	// cancellation batch), avoiding one GetPreparationUnit round trip per unit.
 	ListPreparationUnitsByIDs(ctx context.Context, preparationUnitIds []uuid.UUID) ([]PreparationUnit, error)
@@ -525,6 +571,8 @@ type Querier interface {
 	ListShiftClosureDiscrepancies(ctx context.Context, shiftClosureID uuid.UUID) ([]ShiftDiscrepancy, error)
 	// One reconciliation's append-only QR Observations, oldest first.
 	ListShiftQRObservations(ctx context.Context, reconciliationID uuid.UUID) ([]ListShiftQRObservationsRow, error)
+	ListStoreFeatureChanges(ctx context.Context, arg ListStoreFeatureChangesParams) ([]ListStoreFeatureChangesRow, error)
+	ListStoreFeatures(ctx context.Context) ([]ListStoreFeaturesRow, error)
 	// The `submitted` flag on a Charge Allocation is derived, not stored: there is
 	// no submitted column anywhere in the schema, and therefore no flag that can
 	// fall out of step with the Order that defines it.
@@ -710,6 +758,7 @@ type Querier interface {
 	// Submit, this runs Session-then-Checks against Payment's Check-then-Session,
 	// so it inherits ADR-031's AB-BA window (ADR-066).
 	LockSessionChecksForRecovery(ctx context.Context, serviceSessionID uuid.UUID) ([]LockSessionChecksForRecoveryRow, error)
+	LockStoreFeature(ctx context.Context, key string) (LockStoreFeatureRow, error)
 	// The committed-but-unsubmitted Order Draft of the Session the caller has
 	// already locked with LockServiceSessionForSubmission. Only the draft is
 	// locked here: the Session lock is its own query so a missing or closed
@@ -820,6 +869,7 @@ type Querier interface {
 	SetPreparationUnitCorrectedState(ctx context.Context, arg SetPreparationUnitCorrectedStateParams) error
 	SetPreparationUnitState(ctx context.Context, arg SetPreparationUnitStateParams) error
 	SetStaffEnabled(ctx context.Context, arg SetStaffEnabledParams) (SetStaffEnabledRow, error)
+	SetStoreFeatureEnabled(ctx context.Context, arg SetStoreFeatureEnabledParams) error
 	SetTableAvailability(ctx context.Context, arg SetTableAvailabilityParams) (Table, error)
 	// The settlement consequence of a Cancellation or Comp that reduces a live
 	// Check to zero balance. All four evidence columns are written together

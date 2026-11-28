@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/google/uuid"
 	"golang.org/x/text/collate"
 	"golang.org/x/text/language"
@@ -44,7 +45,7 @@ func (h *SubmitOrderHandler) Handle(ctx context.Context, actor Actor,
 
 	return ExecuteMutation(ctx, h.runner, actor, spec,
 		func(mc MutationContext) (int, ServiceSessionResponse, AuditRecord, error) {
-			result, audit, err := applySubmitOrder(ctx, mc.Queries, actor, cmd)
+			result, audit, err := applySubmitOrder(ctx, mc.Queries, mc.Hooks, actor, cmd)
 			if err != nil {
 				return 0, ServiceSessionResponse{}, AuditRecord{}, err
 			}
@@ -54,7 +55,7 @@ func (h *SubmitOrderHandler) Handle(ctx context.Context, actor Actor,
 
 // applySubmitOrder is the Submit mutation body: it locks the source, appends
 // the Order, and fans each Committed Item out into its Preparation Units.
-func applySubmitOrder(ctx context.Context, q *sqlc.Queries, actor Actor, cmd SubmitOrderCommand) (
+func applySubmitOrder(ctx context.Context, q *sqlc.Queries, bus *hooks.Bus, actor Actor, cmd SubmitOrderCommand) (
 	ServiceSessionResponse, AuditRecord, error,
 ) {
 	source, draftID, checks, err := lockSubmissionSource(ctx, q, cmd.ServiceSessionID)
@@ -88,10 +89,14 @@ func applySubmitOrder(ctx context.Context, q *sqlc.Queries, actor Actor, cmd Sub
 	if err != nil {
 		return ServiceSessionResponse{}, AuditRecord{}, fmt.Errorf("list committed items: %w", err)
 	}
-	unitCount, err := insertOrderItems(ctx, q, orderID, source.ServiceNumber, items, occurredAt)
+	created, err := insertOrderItems(ctx, q, orderID, source.ServiceNumber, items, occurredAt)
 	if err != nil {
 		return ServiceSessionResponse{}, AuditRecord{}, err
 	}
+	if err := bus.PublishCreatedUnits(ctx, q, hooks.OriginSubmit, created, occurredAt); err != nil {
+		return ServiceSessionResponse{}, AuditRecord{}, err
+	}
+	unitCount := len(created)
 
 	out, err := LoadServiceSession(ctx, q, cmd.ServiceSessionID)
 	if err != nil {
@@ -167,28 +172,27 @@ func lockSubmissionSource(ctx context.Context, q *sqlc.Queries, sessionID uuid.U
 }
 
 // insertOrderItems appends one Order Item per Committed Item and one
-// Preparation Unit per unit of its quantity, and returns how many units it
-// queued.
+// Preparation Unit per unit of its quantity, and returns every new unit.
 func insertOrderItems(ctx context.Context, q *sqlc.Queries, orderID uuid.UUID, serviceNumber string,
 	items []sqlc.ListCommittedItemsForSubmissionRow, queuedAt time.Time,
-) (int, error) {
+) ([]hooks.UnitRef, error) {
 	itemIDs := make([]uuid.UUID, 0, len(items))
 	for _, item := range items {
 		itemIDs = append(itemIDs, item.ID)
 	}
 	modifiers, err := loadUnitModifiers(ctx, q, itemIDs)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	unitCount := 0
+	created := make([]hooks.UnitRef, 0, len(items))
 	for _, item := range items {
 		orderItemID, err := q.InsertOrderItem(ctx, sqlc.InsertOrderItemParams{
 			OrderID:         orderID,
 			CommittedItemID: item.ID,
 		})
 		if err != nil {
-			return 0, fmt.Errorf("insert order item: %w", err)
+			return nil, fmt.Errorf("insert order item: %w", err)
 		}
 		mods := modifiers[item.ID]
 		if mods == nil {
@@ -196,12 +200,12 @@ func insertOrderItems(ctx context.Context, q *sqlc.Queries, orderID uuid.UUID, s
 		}
 		encoded, err := json.Marshal(mods)
 		if err != nil {
-			return 0, fmt.Errorf("encode unit modifiers: %w", err)
+			return nil, fmt.Errorf("encode unit modifiers: %w", err)
 		}
 		// One unit per unit of ordered quantity: a Committed Item of quantity
 		// three is three separately prepared drinks.
 		for n := int32(1); n <= item.Quantity; n++ {
-			if err := q.InsertPreparationUnit(ctx, sqlc.InsertPreparationUnitParams{
+			unitID, err := q.InsertPreparationUnit(ctx, sqlc.InsertPreparationUnitParams{
 				OrderItemID:     orderItemID,
 				UnitNumber:      n,
 				ServiceNumber:   serviceNumber,
@@ -211,13 +215,14 @@ func insertOrderItems(ctx context.Context, q *sqlc.Queries, orderID uuid.UUID, s
 				Modifiers:       encoded,
 				PreparationNote: item.PreparationNote,
 				QueuedAt:        queuedAt,
-			}); err != nil {
-				return 0, fmt.Errorf("insert preparation unit: %w", err)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("insert preparation unit: %w", err)
 			}
-			unitCount++
+			created = append(created, hooks.UnitRef{PreparationUnitID: unitID, OrderItemID: orderItemID})
 		}
 	}
-	return unitCount, nil
+	return created, nil
 }
 
 // loadUnitModifiers returns each Committed Item's Modifier Options in the

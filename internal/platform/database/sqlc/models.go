@@ -143,6 +143,87 @@ type IdempotencyKey struct {
 	CreatedAt    time.Time       `json:"created_at"`
 }
 
+type InventoryConsumption struct {
+	ID                uuid.UUID     `json:"id"`
+	PreparationUnitID uuid.UUID     `json:"preparation_unit_id"`
+	MenuItemID        uuid.UUID     `json:"menu_item_id"`
+	SizeID            uuid.NullUUID `json:"size_id"`
+	ModifierOptionIds []uuid.UUID   `json:"modifier_option_ids"`
+	Status            string        `json:"status"`
+	CostStatus        string        `json:"cost_status"`
+	CostTotalVnd      float64       `json:"cost_total_vnd"`
+	RecordedAt        time.Time     `json:"recorded_at"`
+	VoidedAt          sql.NullTime  `json:"voided_at"`
+}
+
+type InventoryConsumptionLine struct {
+	ID               uuid.UUID       `json:"id"`
+	ConsumptionID    uuid.UUID       `json:"consumption_id"`
+	IngredientID     uuid.UUID       `json:"ingredient_id"`
+	IngredientName   string          `json:"ingredient_name"`
+	IngredientKind   string          `json:"ingredient_kind"`
+	StockUnitCode    string          `json:"stock_unit_code"`
+	Quantity         float64         `json:"quantity"`
+	CostPerStockUnit sql.NullFloat64 `json:"cost_per_stock_unit"`
+	LineCostVnd      sql.NullFloat64 `json:"line_cost_vnd"`
+}
+
+type InventoryIngredient struct {
+	ID            uuid.UUID    `json:"id"`
+	Name          string       `json:"name"`
+	Kind          string       `json:"kind"`
+	StockUnitCode string       `json:"stock_unit_code"`
+	RetiredAt     sql.NullTime `json:"retired_at"`
+	CreatedAt     time.Time    `json:"created_at"`
+}
+
+type InventoryIngredientCost struct {
+	ID                   uuid.UUID      `json:"id"`
+	IngredientID         uuid.UUID      `json:"ingredient_id"`
+	AmountVnd            int64          `json:"amount_vnd"`
+	Quantity             float64        `json:"quantity"`
+	UnitCode             sql.NullString `json:"unit_code"`
+	IngredientUnitID     uuid.NullUUID  `json:"ingredient_unit_id"`
+	CostPerStockUnit     float64        `json:"cost_per_stock_unit"`
+	ActorStaffIdentityID uuid.UUID      `json:"actor_staff_identity_id"`
+	RecordedAt           time.Time      `json:"recorded_at"`
+}
+
+type InventoryIngredientUnit struct {
+	ID            uuid.UUID `json:"id"`
+	IngredientID  uuid.UUID `json:"ingredient_id"`
+	Name          string    `json:"name"`
+	StockQuantity float64   `json:"stock_quantity"`
+}
+
+type InventoryRecipe struct {
+	ID               uuid.UUID       `json:"id"`
+	OwnerKind        string          `json:"owner_kind"`
+	MenuItemID       uuid.NullUUID   `json:"menu_item_id"`
+	SizeID           uuid.NullUUID   `json:"size_id"`
+	ModifierOptionID uuid.NullUUID   `json:"modifier_option_id"`
+	IngredientID     uuid.NullUUID   `json:"ingredient_id"`
+	YieldQuantity    sql.NullFloat64 `json:"yield_quantity"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+type InventoryRecipeLine struct {
+	ID               uuid.UUID      `json:"id"`
+	RecipeID         uuid.UUID      `json:"recipe_id"`
+	IngredientID     uuid.UUID      `json:"ingredient_id"`
+	Quantity         float64        `json:"quantity"`
+	UnitCode         sql.NullString `json:"unit_code"`
+	IngredientUnitID uuid.NullUUID  `json:"ingredient_unit_id"`
+	Position         int32          `json:"position"`
+}
+
+type InventoryUnit struct {
+	Code         string  `json:"code"`
+	Dimension    string  `json:"dimension"`
+	BaseCode     string  `json:"base_code"`
+	FactorToBase float64 `json:"factor_to_base"`
+}
+
 type ItemModifierGroup struct {
 	MenuItemID      uuid.UUID `json:"menu_item_id"`
 	ModifierGroupID uuid.UUID `json:"modifier_group_id"`
@@ -579,6 +660,21 @@ type StaffIdentity struct {
 type StaffOperationalRole struct {
 	StaffIdentityID uuid.UUID `json:"staff_identity_id"`
 	Role            string    `json:"role"`
+}
+
+type StoreFeature struct {
+	Key                      string        `json:"key"`
+	Enabled                  bool          `json:"enabled"`
+	UpdatedAt                time.Time     `json:"updated_at"`
+	UpdatedByStaffIdentityID uuid.NullUUID `json:"updated_by_staff_identity_id"`
+}
+
+type StoreFeatureChange struct {
+	ID                   uuid.UUID `json:"id"`
+	Key                  string    `json:"key"`
+	Enabled              bool      `json:"enabled"`
+	ActorStaffIdentityID uuid.UUID `json:"actor_staff_identity_id"`
+	ChangedAt            time.Time `json:"changed_at"`
 }
 
 type Table struct {

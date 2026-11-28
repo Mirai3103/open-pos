@@ -28,6 +28,7 @@ import (
 	"fmt"
 
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/google/uuid"
 )
 
@@ -50,12 +51,13 @@ type Actor struct {
 // Authority is the session and identity row reloaded inside the transaction.
 type Authority = sqlc.GetSessionAuthorityRow
 
-// Runner holds the database connection, the generated queries, and the
-// owning slice's Policy.
+// Runner holds the database connection, the generated queries, the owning
+// slice's Policy, and the Core hook bus mutations publish on.
 type Runner struct {
 	db      *sql.DB
 	queries *sqlc.Queries
 	policy  Policy
+	hooks   *hooks.Bus
 }
 
 // NewRunner creates a Runner bound to a slice's Policy. It panics when the
@@ -75,6 +77,12 @@ func (r *Runner) DB() *sql.DB { return r.db }
 
 // Queries returns the non-transactional generated queries.
 func (r *Runner) Queries() *sqlc.Queries { return r.queries }
+
+// SetHooks attaches the Core hook bus. Call it during wiring, before serving.
+func (r *Runner) SetHooks(b *hooks.Bus) { r.hooks = b }
+
+// Hooks returns the attached hook bus, or nil when none is attached.
+func (r *Runner) Hooks() *hooks.Bus { return r.hooks }
 
 // AdvisoryLock takes a transaction-scoped advisory lock on key. It is exposed
 // for slice code that must serialize on something other than the request,

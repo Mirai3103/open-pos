@@ -4195,6 +4195,835 @@
                 }
             }
         },
+        "/features": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns each store-wide feature switch as key → enabled",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "List Store Features",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/features/{key}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Turns a store-wide feature on or off for every client. Setting the current value again is a no-op.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "Set a Store Feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Feature key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New state",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/features.SetFeatureCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/features.FeatureResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/costing/menu": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Menu costing",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.MenuCostingResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "List Ingredients",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/inventory.IngredientResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Create an Ingredient",
+                "parameters": [
+                    {
+                        "description": "Ingredient",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.CreateIngredientCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.IngredientResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Get an Ingredient",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.IngredientDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}/batch-recipe": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Replace a Batch Recipe",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prepared Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Batch Recipe",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.SetBatchRecipeCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.RecipeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}/costs": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Record an Ingredient cost",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Cost",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.RecordCostCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.CostEntryResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}/name": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Rename an Ingredient",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New name",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.RenameIngredientCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.IngredientResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}/retirement": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Retire an Ingredient",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.RetireIngredientCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.IngredientResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/ingredients/{ingredient_id}/units": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Replace an Ingredient's units",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ingredient ID",
+                        "name": "ingredient_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Units",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.SetIngredientUnitsCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.IngredientResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/recipes/{owner_kind}/{owner_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Get a Recipe",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "menu-item, size or modifier-option",
+                        "name": "owner_kind",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Owner ID",
+                        "name": "owner_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.RecipeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Replace a Recipe",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "menu-item, size or modifier-option",
+                        "name": "owner_kind",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Owner ID",
+                        "name": "owner_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Recipe",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inventory.SetRecipeCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.RecipeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/reports/gross-profit": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Revenue, cost and gross profit of Preparation Units recorded in [from, to). A management figure: Refunds are excluded.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Gross-profit report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "RFC 3339 start (inclusive)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RFC 3339 end (exclusive)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Client UTC offset for day buckets",
+                        "name": "tz_offset_minutes",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inventory.GrossProfitResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/units": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "List system units",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/inventory.SystemUnit"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/preparation/alerts/{alert_id}/acknowledge": {
             "post": {
                 "security": [
@@ -10366,6 +11195,568 @@
                 },
                 "price_vnd": {
                     "type": "integer"
+                }
+            }
+        },
+        "features.FeatureResponse": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "key": {
+                    "type": "string"
+                }
+            }
+        },
+        "features.Interval": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                }
+            }
+        },
+        "features.SetFeatureCommand": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "request_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.CostEntryResponse": {
+            "type": "object",
+            "properties": {
+                "amount_vnd": {
+                    "type": "integer"
+                },
+                "cost_per_stock_unit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "ingredient_id": {
+                    "type": "string"
+                },
+                "ingredient_unit_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "recorded_at": {
+                    "type": "string"
+                },
+                "unit_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.CreateIngredientCommand": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "stock_unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.GrossProfitDay": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "figures": {
+                    "$ref": "#/definitions/inventory.GrossProfitFigures"
+                }
+            }
+        },
+        "inventory.GrossProfitFigures": {
+            "type": "object",
+            "properties": {
+                "cost_vnd": {
+                    "type": "number"
+                },
+                "gross_margin_pct": {
+                    "type": "number"
+                },
+                "gross_profit_vnd": {
+                    "type": "number"
+                },
+                "revenue_vnd": {
+                    "type": "integer"
+                },
+                "units": {
+                    "type": "integer"
+                },
+                "units_cost_none": {
+                    "type": "integer"
+                },
+                "units_cost_partial": {
+                    "type": "integer"
+                },
+                "waste_cost_vnd": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.GrossProfitItem": {
+            "type": "object",
+            "properties": {
+                "figures": {
+                    "$ref": "#/definitions/inventory.GrossProfitFigures"
+                },
+                "item_name": {
+                    "type": "string"
+                },
+                "menu_item_id": {
+                    "type": "string"
+                },
+                "sizes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.GrossProfitSize"
+                    }
+                }
+            }
+        },
+        "inventory.GrossProfitResponse": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.GrossProfitDay"
+                    }
+                },
+                "disabled_intervals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/features.Interval"
+                    }
+                },
+                "from": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.GrossProfitItem"
+                    }
+                },
+                "to": {
+                    "type": "string"
+                },
+                "totals": {
+                    "$ref": "#/definitions/inventory.GrossProfitFigures"
+                }
+            }
+        },
+        "inventory.GrossProfitSize": {
+            "type": "object",
+            "properties": {
+                "figures": {
+                    "$ref": "#/definitions/inventory.GrossProfitFigures"
+                },
+                "size_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.IngredientDetailResponse": {
+            "type": "object",
+            "properties": {
+                "batch_recipe": {
+                    "$ref": "#/definitions/inventory.RecipeResponse"
+                },
+                "cost_history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.CostEntryResponse"
+                    }
+                },
+                "cost_per_stock_unit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "retired": {
+                    "type": "boolean"
+                },
+                "stock_unit": {
+                    "type": "string"
+                },
+                "units": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.IngredientUnitResponse"
+                    }
+                }
+            }
+        },
+        "inventory.IngredientResponse": {
+            "type": "object",
+            "properties": {
+                "cost_per_stock_unit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "retired": {
+                    "type": "boolean"
+                },
+                "stock_unit": {
+                    "type": "string"
+                },
+                "units": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.IngredientUnitResponse"
+                    }
+                }
+            }
+        },
+        "inventory.IngredientUnitInput": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stock_quantity": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.IngredientUnitResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stock_quantity": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.ItemCosting": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "cost_status": {
+                    "type": "string"
+                },
+                "cost_vnd": {
+                    "type": "number"
+                },
+                "item_name": {
+                    "type": "string"
+                },
+                "item_recipe_ignored": {
+                    "type": "boolean"
+                },
+                "margin_pct": {
+                    "type": "number"
+                },
+                "margin_vnd": {
+                    "type": "number"
+                },
+                "menu_item_id": {
+                    "type": "string"
+                },
+                "price_vnd": {
+                    "type": "integer"
+                },
+                "size_id": {
+                    "type": "string"
+                },
+                "size_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.MenuCostingResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.ItemCosting"
+                    }
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.OptionCosting"
+                    }
+                },
+                "prepared_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.PreparedCosting"
+                    }
+                }
+            }
+        },
+        "inventory.OptionCosting": {
+            "type": "object",
+            "properties": {
+                "complete": {
+                    "type": "boolean"
+                },
+                "cost_delta_vnd": {
+                    "type": "number"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "has_recipe": {
+                    "type": "boolean"
+                },
+                "modifier_option_id": {
+                    "type": "string"
+                },
+                "option_name": {
+                    "type": "string"
+                },
+                "priced_without_recipe": {
+                    "type": "boolean"
+                },
+                "surcharge_vnd": {
+                    "type": "integer"
+                }
+            }
+        },
+        "inventory.PreparedCosting": {
+            "type": "object",
+            "properties": {
+                "cost_per_stock_unit": {
+                    "type": "number"
+                },
+                "ingredient_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stock_unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.RecipeLineInput": {
+            "type": "object",
+            "properties": {
+                "ingredient_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit": {
+                    "$ref": "#/definitions/inventory.UnitRef"
+                }
+            }
+        },
+        "inventory.RecipeLineResponse": {
+            "type": "object",
+            "properties": {
+                "ingredient_id": {
+                    "type": "string"
+                },
+                "ingredient_kind": {
+                    "type": "string"
+                },
+                "ingredient_name": {
+                    "type": "string"
+                },
+                "ingredient_unit_id": {
+                    "type": "string"
+                },
+                "ingredient_unit_name": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "stock_unit": {
+                    "type": "string"
+                },
+                "unit_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.RecipeResponse": {
+            "type": "object",
+            "properties": {
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.RecipeLineResponse"
+                    }
+                },
+                "owner_id": {
+                    "type": "string"
+                },
+                "owner_kind": {
+                    "type": "string"
+                },
+                "yield_quantity": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.RecordCostCommand": {
+            "type": "object",
+            "properties": {
+                "amount_vnd": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "unit": {
+                    "$ref": "#/definitions/inventory.UnitRef"
+                }
+            }
+        },
+        "inventory.RenameIngredientCommand": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.RetireIngredientCommand": {
+            "type": "object",
+            "properties": {
+                "request_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.SetBatchRecipeCommand": {
+            "type": "object",
+            "properties": {
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.RecipeLineInput"
+                    }
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "yield_quantity": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.SetIngredientUnitsCommand": {
+            "type": "object",
+            "properties": {
+                "request_id": {
+                    "type": "string"
+                },
+                "units": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.IngredientUnitInput"
+                    }
+                }
+            }
+        },
+        "inventory.SetRecipeCommand": {
+            "type": "object",
+            "properties": {
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inventory.RecipeLineInput"
+                    }
+                },
+                "request_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "inventory.SystemUnit": {
+            "type": "object",
+            "properties": {
+                "base_code": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "dimension": {
+                    "type": "string"
+                },
+                "factor_to_base": {
+                    "type": "number"
+                }
+            }
+        },
+        "inventory.UnitRef": {
+            "type": "object",
+            "properties": {
+                "ingredient_unit_id": {
+                    "type": "string"
+                },
+                "unit_code": {
+                    "type": "string"
                 }
             }
         },

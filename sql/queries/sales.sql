@@ -789,11 +789,26 @@ INSERT INTO order_items (order_id, committed_item_id)
 VALUES ($1, $2)
 RETURNING id;
 
--- name: InsertPreparationUnit :exec
+-- name: InsertPreparationUnit :one
 INSERT INTO preparation_units (order_item_id, unit_number, service_number,
                                category_name, item_name, size_name,
                                modifiers, preparation_note, queued_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id;
+
+-- name: ListPreparationUnitSources :many
+-- The catalog identities each Order Item was sold as, one row per selected
+-- Modifier Option (one row with a NULL option when none), for Core hook
+-- payloads. committed_items deliberately has no size_id; the source draft
+-- item still holds it.
+SELECT oi.id AS order_item_id, ci.menu_item_id, odi.size_id,
+       cimo.modifier_option_id
+FROM order_items oi
+JOIN committed_items ci ON ci.id = oi.committed_item_id
+JOIN order_draft_items odi ON odi.id = ci.source_draft_item_id
+LEFT JOIN committed_item_modifier_options cimo ON cimo.committed_item_id = ci.id
+WHERE oi.id = ANY(sqlc.arg(order_item_ids)::uuid[])
+ORDER BY oi.id, cimo.modifier_option_id;
 
 -- name: LockServiceSessionForClosure :one
 SELECT id, state, service_number, service_mode, created_at

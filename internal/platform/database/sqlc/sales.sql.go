@@ -953,11 +953,12 @@ func (q *Queries) InsertPaymentVoid(ctx context.Context, arg InsertPaymentVoidPa
 	return i, err
 }
 
-const insertPreparationUnit = `-- name: InsertPreparationUnit :exec
+const insertPreparationUnit = `-- name: InsertPreparationUnit :one
 INSERT INTO preparation_units (order_item_id, unit_number, service_number,
                                category_name, item_name, size_name,
                                modifiers, preparation_note, queued_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id
 `
 
 type InsertPreparationUnitParams struct {
@@ -972,8 +973,8 @@ type InsertPreparationUnitParams struct {
 	QueuedAt        time.Time       `json:"queued_at"`
 }
 
-func (q *Queries) InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) error {
-	_, err := q.db.ExecContext(ctx, insertPreparationUnit,
+func (q *Queries) InsertPreparationUnit(ctx context.Context, arg InsertPreparationUnitParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, insertPreparationUnit,
 		arg.OrderItemID,
 		arg.UnitNumber,
 		arg.ServiceNumber,
@@ -984,7 +985,9 @@ func (q *Queries) InsertPreparationUnit(ctx context.Context, arg InsertPreparati
 		arg.PreparationNote,
 		arg.QueuedAt,
 	)
-	return err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const insertRefund = `-- name: InsertRefund :one
@@ -2577,6 +2580,56 @@ func (q *Queries) ListPaymentRefundAllocations(ctx context.Context, paymentIds [
 			&i.RefundCompletedSaleID,
 			&i.RefundMethod,
 			&i.RefundCompleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPreparationUnitSources = `-- name: ListPreparationUnitSources :many
+SELECT oi.id AS order_item_id, ci.menu_item_id, odi.size_id,
+       cimo.modifier_option_id
+FROM order_items oi
+JOIN committed_items ci ON ci.id = oi.committed_item_id
+JOIN order_draft_items odi ON odi.id = ci.source_draft_item_id
+LEFT JOIN committed_item_modifier_options cimo ON cimo.committed_item_id = ci.id
+WHERE oi.id = ANY($1::uuid[])
+ORDER BY oi.id, cimo.modifier_option_id
+`
+
+type ListPreparationUnitSourcesRow struct {
+	OrderItemID      uuid.UUID     `json:"order_item_id"`
+	MenuItemID       uuid.UUID     `json:"menu_item_id"`
+	SizeID           uuid.NullUUID `json:"size_id"`
+	ModifierOptionID uuid.NullUUID `json:"modifier_option_id"`
+}
+
+// The catalog identities each Order Item was sold as, one row per selected
+// Modifier Option (one row with a NULL option when none), for Core hook
+// payloads. committed_items deliberately has no size_id; the source draft
+// item still holds it.
+func (q *Queries) ListPreparationUnitSources(ctx context.Context, orderItemIds []uuid.UUID) ([]ListPreparationUnitSourcesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPreparationUnitSources, pq.Array(orderItemIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPreparationUnitSourcesRow{}
+	for rows.Next() {
+		var i ListPreparationUnitSourcesRow
+		if err := rows.Scan(
+			&i.OrderItemID,
+			&i.MenuItemID,
+			&i.SizeID,
+			&i.ModifierOptionID,
 		); err != nil {
 			return nil, err
 		}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/google/uuid"
 )
 
@@ -76,7 +77,7 @@ func (h *CancelUnitsHandler) Handle(ctx context.Context, actor Actor,
 
 	return ExecuteMutation(ctx, h.runner, actor, spec,
 		func(mc MutationContext) (int, CancelUnitsResponse, AuditRecord, error) {
-			result, err := applyCancelUnits(ctx, mc.Queries, actor, cmd, note)
+			result, err := applyCancelUnits(ctx, mc.Queries, mc.Hooks, actor, cmd, note)
 			if err != nil {
 				return 0, CancelUnitsResponse{}, AuditRecord{}, err
 			}
@@ -109,7 +110,7 @@ func (h *CancelUnitsHandler) Handle(ctx context.Context, actor Actor,
 //  7. per unit in request order, append the state, transition, Cancellation
 //     fact, and alert; batch all audits under the batch's one timestamp;
 //  8. return one outcome and one alert per input unit in request order.
-func applyCancelUnits(ctx context.Context, q *sqlc.Queries, actor Actor,
+func applyCancelUnits(ctx context.Context, q *sqlc.Queries, bus *hooks.Bus, actor Actor,
 	cmd CancelUnitsCommand, note *string,
 ) (CancelUnitsResponse, error) {
 	ids := cmd.PreparationUnitIDs
@@ -177,6 +178,11 @@ func applyCancelUnits(ctx context.Context, q *sqlc.Queries, actor Actor,
 	}
 	result, audits, err := writes.apply(ctx, q, plans, audits)
 	if err != nil {
+		return CancelUnitsResponse{}, err
+	}
+	if err := bus.PublishPreparationUnitsCancelled(ctx, q, hooks.PreparationUnitsCancelled{
+		PreparationUnitIDs: ids, At: occurredAt,
+	}); err != nil {
 		return CancelUnitsResponse{}, err
 	}
 	if err := writePreparationAudits(ctx, q, actor, occurredAt, audits); err != nil {

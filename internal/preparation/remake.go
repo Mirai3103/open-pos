@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mirai3103/open-pos/internal/platform/database/sqlc"
+	"github.com/Mirai3103/open-pos/internal/platform/hooks"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -128,7 +129,7 @@ func (h *RemakeUnitHandler) Handle(ctx context.Context, actor Actor,
 
 	return ExecuteMutation(ctx, h.runner, actor, spec,
 		func(mc MutationContext) (int, RemakeResponse, AuditRecord, error) {
-			response, err := applyRemake(ctx, mc.Queries, actor, source, cmd.Reason, note)
+			response, err := applyRemake(ctx, mc.Queries, mc.Hooks, actor, source, cmd.Reason, note)
 			if err != nil {
 				return 0, RemakeResponse{}, AuditRecord{}, err
 			}
@@ -161,7 +162,7 @@ func (h *RemakeUnitHandler) Handle(ctx context.Context, actor Actor,
 //  8. write the one business audit through writePreparationAudits;
 //  9. load the replacement unit and return the complete result, leaving the
 //     pipeline's AuditRecord at zero.
-func applyRemake(ctx context.Context, q *sqlc.Queries, actor Actor,
+func applyRemake(ctx context.Context, q *sqlc.Queries, bus *hooks.Bus, actor Actor,
 	source remakeSource, reason string, note *string,
 ) (RemakeResponse, error) {
 	// 1–2. Session-first locking, then the Order Item.
@@ -188,6 +189,12 @@ func applyRemake(ctx context.Context, q *sqlc.Queries, actor Actor,
 	// 5–6. The replacement unit.
 	replacement, err := insertRemakeUnit(ctx, q, waste.OrderItemID, sourceUnit, occurredAt)
 	if err != nil {
+		return RemakeResponse{}, err
+	}
+
+	if err := bus.PublishCreatedUnits(ctx, q, hooks.OriginRemake, []hooks.UnitRef{{
+		PreparationUnitID: replacement.ID, OrderItemID: waste.OrderItemID,
+	}}, occurredAt); err != nil {
 		return RemakeResponse{}, err
 	}
 
